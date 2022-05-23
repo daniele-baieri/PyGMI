@@ -1,0 +1,13 @@
+Neural Geometric Representations Tool
+
+Goals
+    1. Provide high-level interface to operations with neural implicit 3D objects
+    2. Provide high-level interface to solving tasks with ... (e.g. reconstruct surface from point cloud)
+
+Required components:
+    1. Unified data pipeline
+    2. Popular neural network models of the field
+    3. Functional interface for tasks
+    4. Object oriented interface for representations
+    5. Visualization utilities
+    6. Math utilities

@@ -5,20 +5,24 @@ class DataSource:
 
     def __init__(self, indices: List[int] = None):
         """
-        Initialize abstract data source. If no indices are selected, 
-        use all the available data.
+        Initialize abstract data source. 
+        If no indices are selected, use all the available data.
 
         Parameters
         ----------
         indices : List[int], optional
             indices of data objects to select, by default None
         """           
-        self.source = None
-        self.indices = indices
+        self.indices = range(len(self.source)) if indices is None else indices
 
     def __getitem__(self, idx: int) -> Any:
         return self.source[self.indices]
+
+    def __len__(self) -> int:
+        return len(self.source)
     
+    def process(self, obj: Any) -> Any:
+        return obj
 
 '''
 class Shape:

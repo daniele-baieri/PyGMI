@@ -1,0 +1,36 @@
+data:
+
+  val_split: 0.2
+
+  train_source_conf:
+    - type: PyGDataSource
+      source_conf:
+        source: FAUST
+        idx_select: null
+        kwargs:
+          root: data/FAUST
+          train: true
+    - type: PLYDataSource
+      source_conf:
+        source: data/SCAPE/meshes/train
+        idx_select: null
+
+  test_source_conf:
+    - type: PyGDataSource
+      source_conf:
+        source: FAUST
+        idx_select: null
+        kwargs:
+          root: data/FAUST
+          train: false
+    - type: PLYDataSource
+      source_conf:
+        source: data/SCAPE/meshes/test
+        idx_select: null
+
+  preprocessing:
+    do_preprocessing: true
+    out_dir: data/processed/
+    script: ground_truth_sdf
+    conf:
+      sample: 500000

@@ -11,13 +11,8 @@ from CGAL.CGAL_AABB_tree import AABB_tree_Triangle_3_soup
 def process_shape(
     S: PyGData,
     sample: int, 
-    out_dir: str, 
-    index: int, 
-    force_reprocess: bool = False
-) -> str:
-    shape_out = out_dir + '/shape_{}.pth'.format(index)
-    if os.path.exists(shape_out) and not force_reprocess:
-        return shape_out
+    out_path: str
+) -> None: 
 
     # Create trimesh # 
     F = S.face
@@ -81,9 +76,7 @@ def process_shape(
             'dists': sample_dists,
             'matching': V,
             'faces': F.T,
-            'normals': torch.from_numpy(normals)[:, [0, 2, 1]].float(),
-            'index': index
+            'normals': torch.from_numpy(normals)[:, [0, 2, 1]].float()
         },
-        shape_out
+        out_path
     )
-    return shape_out

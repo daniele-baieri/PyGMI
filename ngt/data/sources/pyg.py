@@ -1,10 +1,11 @@
 import torch_geometric.datasets as pygdst
-from torch_geometric.data import Data as PyGData
 from typing import Dict, List
+from torch_geometric.data import Data as PyGData
+from ngt.data.sources.core import DataSource
 
 
 
-class PyGDataSource:
+class PyGDataSource(DataSource):
 
     def __init__(self, source: str, idx_select: List[int] = None, **kwargs: Dict):
         """
@@ -18,7 +19,5 @@ class PyGDataSource:
         idx_select : List[int]
             indices of data objects to select, by default None
         """        
-        super(PyGDataSource, self).__init__()
-
         self.source = getattr(pygdst, source)(**kwargs)
-        self.indices = idx_select
+        super(PyGDataSource, self).__init__(indices=idx_select)

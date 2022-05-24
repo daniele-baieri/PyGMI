@@ -1,23 +1,47 @@
 import os
 from typing import List
+from torch_geometric.data import Data as PyGData
+from torch_geometric.io import read_ply
+from torchvision.datasets import ImageFolder
 from ngt.data.sources.core import DataSource
 
 
-class InMemoryDataSource(DataSource):
+class PLYDataSource(DataSource):
 
-    def __init__(self, path: str, idx_select: List[int] = None):
+    def __init__(self, source: str, idx_select: List[int] = None):
         """
-        Initializes a data source from files.
+        Initializes a data source from .ply files in a folder.
         
 
         Parameters
         ----------
-        path : str
+        source : str
             path to directory containing the files
         idx_select : List[int], optional
             indices of data objects to select, by default None
         """           
-        super(InMemoryDataSource, self).__init__(idx_select)
+        self.source = os.listdir(source)
+        super(PLYDataSource, self).__init__(indices=idx_select)
+    
+    def process(self, obj: str) -> PyGData:
+        return read_ply(obj)
 
-        self.source = os.listdir(path)
+
+class PNGDataSource(DataSource):
+
+    def __init__(self, source: str, idx_select: List[int] = None):
+        """
+        Initializes a data source from .png files in a folder.
+        
+
+        Parameters
+        ----------
+        source : str
+            path to directory containing the files
+        idx_select : List[int], optional
+            indices of data objects to select, by default None
+        """           
+        self.source = ImageFolder(source)
+        super(PNGDataSource, self).__init__(indices=idx_select)
+
     

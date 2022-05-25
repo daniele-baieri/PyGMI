@@ -1,29 +1,15 @@
 import re
-import os
 import random
 import numpy as np
 import pytorch_lightning as pl
 import ngt.data.sources
 import ngt.data.preprocess
 from torch.utils.data import DataLoader
-from typing import Callable, Optional, List, Dict
-from ngt.data.sources.core import DataSource
+from torch import Tensor
+from typing import Optional, List, Dict, Tuple
+from ngt.data.preprocess import gather_fnames, process_source
+from ngt.utils.files import validate_fnames
 
-
-
-def process_source(data: DataSource, fnames: List[str], fn: Callable, fn_kwargs: Dict) -> None:
-    for i in range(len(fnames)):
-        fn(data[i], **fn_kwargs)
-
-def gather_fnames(out_dir: str, source_name: str, n: int) -> List[str]:
-    return [out_dir + '/{}_{}.pth'.format(source_name, i) for i in range(n)]
-
-def validate_fnames(dir: str) -> bool:
-    files = os.listdir(dir)
-    for f in files:
-        if not os.path.isfile(f):
-            return False
-    return True
 
 
 class MultiSourceData(pl.LightningDataModule):
@@ -35,10 +21,25 @@ class MultiSourceData(pl.LightningDataModule):
         preprocessing_conf: Dict,
         val_split: float
     ):
+        """
+        _summary_
+
+        Parameters
+        ----------
+        train_source_conf : List[Dict]
+            _description_
+        test_source_conf : List[Dict]
+            _description_
+        preprocessing_conf : Dict
+            _description_
+        val_split : float
+            _description_
+        """    
         super(MultiSourceData, self).__init__()
         self.train = train_source_conf
         self.test = test_source_conf
         self.preproc_conf = preprocessing_conf
+        self.preproc_fn = getattr(ngt.data.preprocess, self.preproc_conf['script'])
         self.train_paths, self.val_paths, self.test_paths = [], [], []
         self.val_split = val_split
 
@@ -50,10 +51,9 @@ class MultiSourceData(pl.LightningDataModule):
                 sname = '_'.join(re.split('/|\\', conf['source_conf']['source'].replace('/', '_')))
                 fnames = gather_fnames(self.preproc_conf['out_dir'], sname, len(source))
                 if self.preproc_conf['do_preprocessing']:
-                    preproc_fn = getattr(ngt.data.preprocess, self.preproc_conf['script'])
-                    process_source(source, preproc_fn, fnames)
+                    process_source(source, self.preproc_fn, fnames, self.preproc_conf['conf'])
                 else:
-                    if not validate_fnames(self.preproc_conf['out_dir']):
+                    if not validate_fnames(fnames):
                         raise RuntimeError('Processed files missing with preprocessing disabled.')
                 self.train_paths += fnames
 
@@ -68,13 +68,53 @@ class MultiSourceData(pl.LightningDataModule):
                 sname = '_'.join(re.split('/|\\', conf['source_conf']['source'].replace('/', '_')))
                 fnames = gather_fnames(self.preproc_conf['out_dir'], sname, len(source))
                 if self.preproc_conf['do_preprocessing']:
-                    preproc_fn = getattr(ngt.data.preprocess, self.preproc_conf['script'])
-                    process_source(source, preproc_fn, fnames)
+                    process_source(source, self.preproc_fn, fnames, self.preproc_conf['conf'])
                 else:
-                    if not validate_fnames(self.preproc_conf['out_dir']):
+                    if not validate_fnames(fnames):
                         raise RuntimeError('Processed files missing with preprocessing disabled.')
                 self.test_paths += fnames
         
+    def train_dataloader(self) -> DataLoader:
+        raise NotImplementedError()
+
+    def val_dataloader(self) -> DataLoader:
+        raise NotImplementedError()
+
+    def test_dataloader(self) -> DataLoader:
+        raise NotImplementedError()
+
+
+class SDFUnsupervisedData(MultiSourceData):
+
+    def __init__(
+        self, 
+        train_source_conf: List[Dict], 
+        test_source_conf: List[Dict],
+        preprocessing_conf: Dict,
+        val_split: float,
+        global_sigma: float = None
+    ):
+        """
+        _summary_
+
+        Parameters
+        ----------
+        train_source_conf : List[Dict]
+            _description_
+        test_source_conf : List[Dict]
+            _description_
+        preprocessing_conf : Dict
+            _description_
+        val_split : float
+            _description_
+        """    
+        super(SDFUnsupervisedData, self).__init__(
+            train_source_conf, test_source_conf, preprocessing_conf, val_split)
+        self.preproc_fn = ngt.data.preprocess.upsample_with_normals
+
+    def collate(self, paths: List[str]) -> Tuple[Tensor, Tensor, Tensor]:
+        pass
+
     def train_dataloader(self) -> DataLoader:
         raise NotImplementedError()
 

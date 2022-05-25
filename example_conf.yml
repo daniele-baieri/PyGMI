@@ -31,6 +31,6 @@ data:
   preprocessing:
     do_preprocessing: true
     out_dir: data/processed/
-    script: ground_truth_sdf
+    script: get_distance_values
     conf:
       sample: 500000

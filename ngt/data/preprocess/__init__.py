@@ -1,1 +1,2 @@
-from ngt.data.preprocess.core.sdf import process_shape as ground_truth_sdf
+from ngt.data.preprocess.sdf import *
+from ngt.data.preprocess.core import *

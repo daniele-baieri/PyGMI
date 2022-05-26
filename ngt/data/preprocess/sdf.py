@@ -45,9 +45,8 @@ def _compute_sigmas(pnts: Tensor) -> np.ndarray:
     return np.concatenate(sigmas)
 
 
-def get_distance_values(S: PyGData, out_path: str, sample: int) -> None: 
-    """
-    Preprocess a 3D shape for SDF tasks: get ground truth SDF values
+def get_distance_values(S: PyGData, out_path: str, sample: int, global_sigma: float = 0.2) -> None: 
+    """Preprocess a 3D shape for SDF tasks: get ground truth SDF values
 
     Parameters
     ----------
@@ -57,8 +56,10 @@ def get_distance_values(S: PyGData, out_path: str, sample: int) -> None:
         Surface sample size and (distance sample size) / 2
     out_path : str
         Memory location to save preprocessed data
+    global_sigma : float, optional
+        _description_, by default 0.2
     """    
-
+        
     mesh, V, pnts, normals, center, area = _upsample_and_normalize(S, sample)
 
     # Instantiate CGAL AABB tree #
@@ -73,11 +74,11 @@ def get_distance_values(S: PyGData, out_path: str, sample: int) -> None:
 
     # Sample points with 50-th NN heuristic #
     sigmas = _compute_sigmas(pnts)
-    sigmas_big = 0.2 * np.ones_like(sigmas)
+    sigmas_big = global_sigma * np.ones_like(sigmas)
 
     sample = np.concatenate([
         pnts + np.expand_dims(sigmas,-1) * np.random.normal(0.0, 1.0, size=pnts.shape),
-        pnts + np.expand_dims(sigmas_big,-1) * np.random.normal(0.0,1.0, size=pnts.shape)], axis=0)
+        pnts + np.expand_dims(sigmas_big,-1) * np.random.normal(0.0, 1.0, size=pnts.shape)], axis=0)
 
     # Compute distances # 
     dists = []
@@ -111,8 +112,7 @@ def upsample_with_normals(
     sample: int,
     mnfld_sigma: bool = False
 ) -> None: 
-    """
-    Preprocess a 3D shape for SDF tasks: upsample mesh vertices and 
+    """Preprocess a 3D shape for SDF tasks: upsample mesh vertices and 
     normals, optionally compute spatial sampling sigmas
 
     Parameters
@@ -123,6 +123,8 @@ def upsample_with_normals(
         Surface (and normals) sample size
     out_path : str
         Memory location to save preprocessed data
+    mnfld_sigma: bool
+        Specifies whether to compute space sampling std for each point
     """    
     
     _, V, pnts, normals, _, _ = _upsample_and_normalize(S, sample)
@@ -153,7 +155,7 @@ def center_point_cloud(S: PyGData, out_path: str) -> None:
         A torch_geometric.data.Data object, representing a point cloud (all 
         attributes are ignored except for S.pos)
     """    
-    
+
     # Center in origin
     V = S.pos - S.pos.mean(dim=0, keepdim=True)
 

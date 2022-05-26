@@ -7,7 +7,7 @@ data:
       source_conf:
         source: FAUST
         idx_select: null
-        kwargs:
+        pyg_kwargs:
           root: data/FAUST
           train: true
     - type: PLYDataSource

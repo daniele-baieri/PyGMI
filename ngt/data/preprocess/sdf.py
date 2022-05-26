@@ -46,7 +46,8 @@ def _compute_sigmas(pnts: Tensor) -> np.ndarray:
 
 
 def get_distance_values(S: PyGData, out_path: str, sample: int, global_sigma: float = 0.2) -> None: 
-    """Preprocess a 3D shape for SDF tasks: get ground truth SDF values
+    """Preprocess a 3D shape for SDF tasks: get ground truth distance values
+    without sign. Useful for learning SDFs using (e.g.) sign agnostic regression.
 
     Parameters
     ----------
@@ -146,8 +147,7 @@ def upsample_with_normals(
     )
 
 def center_point_cloud(S: PyGData, out_path: str) -> None:
-    """
-    Simply save a point cloud to disk, after centering in the origin
+    """Simply save a point cloud to disk, after centering in the origin
 
     Parameters
     ----------

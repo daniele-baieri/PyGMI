@@ -42,20 +42,23 @@ class MultiSourceData(pl.LightningDataModule):
         batch_size: Dict[str, int],
         val_split: float
     ):
-        """_summary_
+        """Generic multi-source data module. Should be subclassed to define
+        custom behaviour for collecting preprocessed data into batches.
 
         Parameters
         ----------
         train_source_conf : List[Dict]
-            _description_
+            List of configurations for multiple data sources. Each should specify a type
+            (i.e. a subclass of ngt.data.sources.core.DataSource), and a configuration in 
+            dict format depending on the source type (see ngt.data.sources)
         test_source_conf : List[Dict]
-            _description_
+            List of configurations for multiple data sources
         preprocessing_conf : Dict
-            _description_
+            Configuration for preprocessing procedure for the selected data sources
         batch_size : Dict[str, int]
-            _description_
+            Batch size for train, test, val. Expects keys: {"train", "val", "test"}
         val_split : float
-            _description_
+            Fraction of training data serving for validation
         """
         super(MultiSourceData, self).__init__()
         self.train = train_source_conf
@@ -98,15 +101,37 @@ class MultiSourceData(pl.LightningDataModule):
                     if not validate_fnames(fnames):
                         raise RuntimeError('Processed files missing with preprocessing disabled.')
                 self.train_paths.union(fnames)
+
+    def collate(self, paths: List[Tuple[str, int]]) -> Any:
+        """Users should override this method to define what happens with stored 
+        preprocessed data when it is required for usage.
+
+        Parameters
+        ----------
+        paths : List[str]
+            List of paths to preprocessed data
+
+        Returns
+        -------
+        Any
+            Data points ready for usage in NGT pipelines (this will be returned
+            when iterating on the DataLoader)
+
+        Raises
+        ------
+        NotImplementedError
+            Has to be implemented in subclasses
+        """
+        raise NotImplementedError()
         
     def train_dataloader(self) -> DataLoader:
-        raise NotImplementedError()
+        return DataLoader(self.train_paths, self.batch_size['train'], shuffle=True, collate_fn=self.collate)
 
     def val_dataloader(self) -> DataLoader:
-        raise NotImplementedError()
+        return DataLoader(self.val_paths, self.batch_size['val'], collate_fn=self.collate)
 
     def test_dataloader(self) -> DataLoader:
-        raise NotImplementedError()
+        return DataLoader(self.test_paths, self.batch_size['test'], collate_fn=self.collate)
 
 
 class SDFUnsupervisedData(MultiSourceData):
@@ -119,41 +144,47 @@ class SDFUnsupervisedData(MultiSourceData):
         val_split: float,
         batch_size: Dict[str, int],
         surf_sample: int,
-        space_sample: int,
+        global_space_sample: int,
         global_sigma: float,
         local_sigma: float = None,
         use_normals: bool = True
     ):
-        """_summary_
+        """3D data for unsupervised (i.e. without ground truth distances)
+        SDF tasks. Uses supersampled meshes with normals, and by default
+        uses point-wise standard deviations for spatial sampling.
 
         Parameters
         ----------
         train_source_conf : List[Dict]
-            _description_
+            List of configurations for multiple data sources. Each should specify a type
+            (i.e. a subclass of ngt.data.sources.core.DataSource), and a configuration in 
+            dict format depending on the source type (see ngt.data.sources)
         test_source_conf : List[Dict]
-            _description_
+            List of configurations for multiple data sources
         preprocessing_conf : Dict
-            _description_
-        val_split : float
-            _description_
+            Configuration for preprocessing procedure for the selected data sources
         batch_size : Dict[str, int]
-            _description_
+            Batch size for train, test, val. Expects keys: {"train", "val", "test"}
+        val_split : float
+            Fraction of training data serving for validation
         surf_sample : int
-            _description_
-        space_sample : int
-            _description_
+            Size of point sample representing a shape's surface
+        global_space_sample : int
+            Size of global point samples in spatial sampling. Usually set to 
+            `surf_sample // 8`. The final size of spatial samples is `surf_sample + global_space_sample`
         global_sigma : float
-            _description_
+            Maximum coordinate of space for global spatial point sampling
         local_sigma : float, optional
-            _description_, by default None
+            std. dev. for local spatial point sampling; if None, preprocessed shapes 
+            are expected to have key "mnfld_sigma", by default None
         use_normals : bool, optional
-            _description_, by default True
+            Whether to sample normals together with surface points, by default True
         """        
         super(SDFUnsupervisedData, self).__init__(
             train_source_conf, test_source_conf, preprocessing_conf, batch_size, val_split)
         self.preproc_fn = ngt.data.preprocess.upsample_with_normals
         self.surf_sample = surf_sample
-        self.space_sample = space_sample
+        self.space_sample = global_space_sample
         self.global_sigma = global_sigma
         self.use_normals = use_normals
         if local_sigma is None:
@@ -163,6 +194,24 @@ class SDFUnsupervisedData(MultiSourceData):
             self.local_sigma = local_sigma
 
     def sample_shape_space(self, point_cloud: Tensor, local_sigma: Union[Tensor, float]) -> Tensor:
+        """Samples points from embedding space, concatenating a small uniformly sampled
+        (global) sample with a large Gaussian local sample, computed either with point-wise
+        standard deviations (if `type(local_sigma) == Tensor`) or fixed standard deviation
+        (if `type(local_sigma) == float`)
+
+        Parameters
+        ----------
+        point_cloud : Tensor
+            Surface samples of shapes for which to perform spatial sampling. Shape: `B x S x 3`
+        local_sigma : Union[Tensor, float]
+            Standard deviation for local sampling. Either fixed (if type is float) or point-wise
+            (if type is Tensor)
+
+        Returns
+        -------
+        Tensor
+            A random sample of points around each given point cloud
+        """        
         sample_local = point_cloud + (torch.randn_like(point_cloud) * local_sigma)
         sample_global = (
             2 * self.global_sigma * torch.rand(
@@ -171,6 +220,21 @@ class SDFUnsupervisedData(MultiSourceData):
         return torch.cat([sample_local, sample_global], dim=1)
 
     def sample_surface(self, shape: Dict[str, Tensor]) -> List[Tensor]:
+        """Samples a surface, optionally with normals and point-wise 
+        local sampling standard deviations.
+
+        Parameters
+        ----------
+        shape : Dict[str, Tensor]
+            Preprocessed shape data. Expects keys {"surface", "normals", 
+            "vertices", "faces"} and optionally "mnfld_sigma"
+
+        Returns
+        -------
+        List[Tensor]
+            List of three elements: surface sample, normals sample, sigmas sample.
+            Normals and sigmas can be None if they are not required (by configuration)
+        """
         surf = shape['surface']
         indices = random.sample(range(surf.shape[0]), self.surf_sample)
         out = [surf[indices, :]]
@@ -188,15 +252,6 @@ class SDFUnsupervisedData(MultiSourceData):
         space_sample = self.sample_shape_space(surf_sample, sigma)
         return shape_ids, surf_sample, norm_sample, space_sample
 
-    def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_paths, self.batch_size['train'], shuffle=True, collate_fn=self.collate)
-
-    def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.val_paths, self.batch_size['val'], collate_fn=self.collate)
-
-    def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_paths, self.batch_size['test'], collate_fn=self.collate)
-
 
 class SDFSupervisedData(MultiSourceData):
 
@@ -211,30 +266,31 @@ class SDFSupervisedData(MultiSourceData):
         space_sample: int,
         use_normals: bool = True
     ):
-        """_summary_
+        """3D data for supervised (i.e. with ground truth distances) SDF tasks.
 
         Parameters
         ----------
         train_source_conf : List[Dict]
-            _description_
+            List of configurations for multiple data sources. Each should specify a type
+            (i.e. a subclass of ngt.data.sources.core.DataSource), and a configuration in 
+            dict format depending on the source type (see ngt.data.sources)
         test_source_conf : List[Dict]
-            _description_
+            List of configurations for multiple data sources
         preprocessing_conf : Dict
-            _description_
-        val_split : float
-            _description_
+            Configuration for preprocessing procedure for the selected data sources
         batch_size : Dict[str, int]
-            _description_
+            Batch size for train, test, val. Expects keys: {"train", "val", "test"}
+        val_split : float
+            Fraction of training data serving for validation
         surf_sample : int
-            _description_
+            Size of point sample representing a shape's surface
         space_sample : int
-            _description_
+            Size of point samples for a shape's embedding space, with distances
         use_normals : bool, optional
-            _description_, by default True
-        """        
-        super(SDFUnsupervisedData, self).__init__(
+            Whether to sample normals together with surface points, by default True
+        """          
+        super(SDFSupervisedData, self).__init__(
             train_source_conf, test_source_conf, preprocessing_conf, batch_size, val_split)
-        self.preproc_fn = ngt.data.preprocess.get_distance_values
         self.surf_sample = surf_sample
         self.space_sample = space_sample
         self.use_normals = use_normals
@@ -259,12 +315,3 @@ class SDFSupervisedData(MultiSourceData):
         norm_sample = torch.stack([x[1] for x in samples]) if self.use_normals else None
         dist_sample = torch.stack([self.sample_distances(shape) for shape in data])
         return shape_ids, surf_sample, norm_sample, dist_sample
-
-    def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_paths, self.batch_size['train'], shuffle=True, collate_fn=self.collate)
-
-    def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.val_paths, self.batch_size['val'], collate_fn=self.collate)
-
-    def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_paths, self.batch_size['test'], collate_fn=self.collate)

@@ -9,10 +9,8 @@ from ngt.data.sources.core import DataSource
 class PLYDataSource(DataSource):
 
     def __init__(self, source: str, idx_select: List[int] = None):
-        """
-        Initializes a data source from .ply files in a folder.
+        """Initializes a data source from .ply files in a folder.
         
-
         Parameters
         ----------
         source : str
@@ -30,10 +28,8 @@ class PLYDataSource(DataSource):
 class PNGDataSource(DataSource):
 
     def __init__(self, source: str, idx_select: List[int] = None):
-        """
-        Initializes a data source from .png files in a folder.
+        """Initializes a data source from .png files in a folder.
         
-
         Parameters
         ----------
         source : str

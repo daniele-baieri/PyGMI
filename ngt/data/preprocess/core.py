@@ -1,11 +1,9 @@
-
 from typing import Callable, Dict, List
 from ngt.data.sources.core import DataSource
 
 
 def gather_fnames(out_dir: str, source_name: str, n: int) -> List[str]:
-    """
-    Creates a list of filenames for storing processed data points.
+    """Creates a list of filenames for storing processed data points.
 
     Parameters
     ----------
@@ -24,8 +22,7 @@ def gather_fnames(out_dir: str, source_name: str, n: int) -> List[str]:
     return [out_dir + '/{}_{}.pth'.format(source_name, i) for i in range(n)]
 
 def process_source(data: DataSource, fnames: List[str], fn: Callable, fn_kwargs: Dict) -> None:
-    """
-    Runs a preprocessing function for each element in a data source.
+    """Runs a preprocessing function for each element in a data source.
 
     Parameters
     ----------

@@ -221,7 +221,7 @@ def isosurf_animation(
 '''
 import ngt.utils
 import plotly.graph_objects as go
-G = ngt.utils.evaluate_sdf_grid(ngt.utils.sphere_sdf, 3, 100, 1.0, 'cpu')
+G = ngt.utils.grid_evaluation(ngt.utils.sphere_sdf, 3, 100, 1.0, 'cpu')
 fig = go.Figure()
 ngt.utils.isosurf_animation(G, steps=20, fig=fig)
 fig.show()

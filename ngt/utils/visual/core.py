@@ -20,10 +20,10 @@ def validate_figure(func: Callable):
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if kwargs['fig'] is None:
-            kwargs['fig'] = go.Figure() # make_3d_figure(1, 1)
-        # fig = func(*args, **kwargs)
-        # return fig
+        # Maybe check if args contain a go.Figure? 
+        # Someone may pass a figure without fig =
+        if 'fig' not in kwargs.keys():
+            kwargs['fig'] = go.Figure() 
         func(*args, **kwargs)
         return kwargs['fig']
     return wrapper
@@ -222,7 +222,6 @@ def isosurf_animation(
 import ngt.utils
 import plotly.graph_objects as go
 G = ngt.utils.grid_evaluation(ngt.utils.sphere_sdf, 3, 100, 1.0, 'cpu')
-fig = go.Figure()
-ngt.utils.isosurf_animation(G, steps=20, fig=fig)
+fig = ngt.utils.isosurf_animation(G, steps=20)
 fig.show()
 '''

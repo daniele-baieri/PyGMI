@@ -40,7 +40,7 @@ def extract_level_set(
         Vertices and faces of extracted mesh. If there is no zero crossing, 
         it returns a single triangle collapsing on the origin.
     """    
-    volume = grid_evaluation(f, dim, res, bound, device, f_args, f_kwargs)
+    volume = grid_evaluation(f, dim, res, bound, device, *f_args, **f_kwargs)
     verts, faces = marching_cubes(volume, (2 * bound) / (res - 1), level)
     if len(faces) > 1:
         verts -= bound

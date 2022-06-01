@@ -21,6 +21,9 @@ class Autodecoder(nn.Module):
             stddev of initial distribution
         """        
         super(Autodecoder, self).__init__()
+        self.N = num_data_pts
+        self.D = latent_dim
+        self.S = sigma
         self.vectors = nn.parameter.Parameter(
             torch.randn((num_data_pts, latent_dim)) * sigma)
 

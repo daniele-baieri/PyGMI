@@ -17,6 +17,8 @@ We define both pre-made commonly used structures and supertypes to define your c
 
 ## Tasks
 
+Pre-implemented tasks use WandB for logging, however we allow to disable logging - you may use whichever logger you prefer for your custom tasks.
+
 
 # Dependencies
 

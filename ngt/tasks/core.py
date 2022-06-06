@@ -37,3 +37,26 @@ class TaskBaseModule(pl.LightningModule):
                 reduce_fx, tbptt_reduce_fx, tbptt_pad_token, enable_graph, 
                 sync_dist, sync_dist_op, sync_dist_group, add_dataloader_idx, 
                 batch_size, metric_attribute, rank_zero_only)
+
+
+def run_task(
+    data: pl.LightningDataModule, task_module: TaskBaseModule, trainer: pl.Trainer
+) -> ImplicitFunction:
+    """_summary_
+
+    Parameters
+    ----------
+    data : pl.LightningDataModule
+        _description_
+    task_module : TaskBaseModule
+        _description_
+    trainer : pl.Trainer
+        _description_
+
+    Returns
+    -------
+    ImplicitFunction
+        _description_
+    """    
+    trainer.fit(task_module, data)
+    return task_module.geometry

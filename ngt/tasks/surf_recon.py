@@ -1,10 +1,9 @@
 import wandb
 import torch
-import pytorch_lightning as pl
 import torch.nn.functional as F
 import ngt.utils.math.diffops as diffops
 from torch import Tensor
-from typing import List, Literal
+from typing import List
 from ngt.tasks import TaskBaseModule
 from ngt.tasks.types import SDF
 from ngt.utils.extract import extract_level_set
@@ -28,6 +27,33 @@ class SupervisedDistanceRegression(TaskBaseModule):
         epochs_for_plot: int = 200,
         debug_mode: bool = False
     ):       
+        """_summary_
+
+        Parameters
+        ----------
+        sdf_functional : SDF
+            _description_
+        autodecoder : Autodecoder, optional
+            _description_, by default None
+        sign_agnostic : bool, optional
+            _description_, by default True
+        lr_sdf : float, optional
+            _description_, by default 5e-4
+        lr_autodec : float, optional
+            _description_, by default 1e-3
+        lr_sched_step : int, optional
+            _description_, by default 500
+        lr_sched_gamma : float, optional
+            _description_, by default 0.5
+        plot_resolution : int, optional
+            _description_, by default 100
+        plot_max_coord : float, optional
+            _description_, by default 1.0
+        epochs_for_plot : int, optional
+            _description_, by default 200
+        debug_mode : bool, optional
+            _description_, by default False
+        """        
         super(SupervisedDistanceRegression, self).__init__(sdf_functional, debug_mode)
         self.dim = self.geometry.dim
         self.sal = sign_agnostic
@@ -96,7 +122,42 @@ class EikonalIVPOptimization(TaskBaseModule):
         epochs_for_plot: int = 500,
         debug_mode: bool = False
     ):       
-        super(SupervisedDistanceRegression, self).__init__(sdf_functional, debug_mode)
+        """_summary_
+
+        Parameters
+        ----------
+        sdf_functional : SDF
+            _description_
+        autodecoder : Autodecoder, optional
+            _description_, by default None
+        lr_sdf : float, optional
+            _description_, by default 5e-4
+        lr_autodec : float, optional
+            _description_, by default 1e-3
+        lr_sched_step : int, optional
+            _description_, by default 500
+        lr_sched_gamma : float, optional
+            _description_, by default 0.5
+        surf_loss_w : float, optional
+            _description_, by default 1.0
+        eikonal_loss_w : float, optional
+            _description_, by default 1e-2
+        norm_loss_w : float, optional
+            _description_, by default 1.0
+        zero_penalty_w : float, optional
+            _description_, by default 1e-1
+        zero_penalty_a : float, optional
+            _description_, by default 1e2
+        plot_resolution : int, optional
+            _description_, by default 100
+        plot_max_coord : float, optional
+            _description_, by default 1.0
+        epochs_for_plot : int, optional
+            _description_, by default 500
+        debug_mode : bool, optional
+            _description_, by default False
+        """        
+        super(EikonalIVPOptimization, self).__init__(sdf_functional, debug_mode)
         self.dim = self.geometry.dim
         self.lr_sdf = lr_sdf
         self.scheduler_step = lr_sched_step
@@ -169,9 +230,3 @@ class EikonalIVPOptimization(TaskBaseModule):
         fig = plot_trisurf(V, T)
         self.log("Reconstruction", wandb.Image(fig))
 
-
-def surface_reconstruction(
-    method: Literal['regression', 'ivp'],
-    architecture: str,
-) -> SDF:
-    pass

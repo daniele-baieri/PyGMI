@@ -1,0 +1,64 @@
+data:
+
+  dataset_type: SDFSupervisedData
+  val_split: 0.0
+
+  train_source_conf:
+    - type: PyGDataSource
+      source_conf:
+        source: FAUST
+        idx_select: null
+        pyg_kwargs:
+          root: data/FAUST
+          train: true
+    - type: PLYDataSource
+      source_conf:
+        source: data/SCAPE/meshes/train
+        idx_select: null
+
+  preprocessing:
+    do_preprocessing: true
+    out_dir: data/processed/
+    script: get_distance_values
+    conf:
+      sample: 500000
+
+  batch_size:
+    train: 16
+
+  surf_sample: 16384
+  space_sample: 16384
+  use_normals: false
+
+
+task:
+
+  name: SupervisedDistanceRegression
+
+  functional:
+    type: SDF
+    dim: 3
+
+    approximator:
+      type: SirenSDF
+      hidden_dim: 256
+      hidden_layers: 5
+      use_first_layer_init: false
+      w0_in_layer_init: true
+    
+  num_shapes: 131
+  condition_size: 256
+  sign_agnostic: true
+  lr_sdf: 5e-4
+  lr_autodec: 1e-3
+  lr_sched_step: 500
+  lr_sched_gamma: 0.5
+  plot_resolution: 100
+  plot_max_coord: 1.2
+
+
+optimization:
+  
+  max_epochs: 2000
+  logging: false
+  gpus: 1

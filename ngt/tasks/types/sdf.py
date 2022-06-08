@@ -1,5 +1,4 @@
 import numpy as np
-import torch.nn as nn
 import ngt.utils.math.diffops as diffops
 import ngt.utils.extract as extract
 from typing import Callable, Literal, Tuple
@@ -9,17 +8,17 @@ from ngt.tasks.types import ImplicitFunction
 
 class SDF(ImplicitFunction):
 
-    def __init__(self, functional: Callable, dim: int = 3):
+    def __init__(self, approximator: Callable, dim: int = 3):
         """_summary_
 
         Parameters
         ----------
-        functional : Callable
+        approximator : Callable
             _description_
         dim : int, optional
             _description_, by default 3
         """        
-        super(SDF, self).__init__(functional)
+        super(SDF, self).__init__(approximator)
         self.dim = dim
 
     def normal(self, coords: Tensor, condition: Tensor = None) -> Tensor:      

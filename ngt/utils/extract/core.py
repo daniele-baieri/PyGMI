@@ -52,6 +52,7 @@ def grid_evaluation(
     res: int, 
     bound: float, 
     device: str, 
+    split: int = 100000,
     *f_args, **f_kwargs,
 ) -> np.ndarray:  
     """Evaluates an implicit function on a regular voxel grid. Input space
@@ -73,6 +74,8 @@ def grid_evaluation(
         Maximum coordinate of voxel grid, by default 1.0
     device : str
         Device on which to run the computation, by default 'cpu'
+    split : int, optional
+        _description_, by default 20000
 
     Returns
     -------
@@ -83,11 +86,11 @@ def grid_evaluation(
     volume = []
     with torch.no_grad():
         G = utils.make_grid(res, bound, dim)
-        split = torch.split(G, 100000, dim=0)
+        split = torch.split(G, split, dim=0)
         for j in range(len(split)):
             pnts = split[j].to(device)
             volume.append(f(pnts.unsqueeze(0), *f_args, **f_kwargs).detach().cpu().numpy())
-        return np.concatenate(volume, axis=0).reshape(res, res, res).transpose([1, 0, 2])
+        return np.concatenate(volume, axis=1).reshape(res, res, res).transpose([1, 0, 2])
 
 def marching_cubes(volume: np.ndarray, voxel_size: float, level: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
     """Invokes Marching Cubes on a voxel grid containing a scalar function.

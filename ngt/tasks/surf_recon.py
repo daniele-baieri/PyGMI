@@ -16,7 +16,8 @@ class SupervisedDistanceRegression(TaskBaseModule):
     def __init__(
         self,
         sdf_functional: SDF,
-        autodecoder: Autodecoder = None,
+        num_shapes: int = 1,
+        condition_size: int = 256,
         sign_agnostic: bool = True,
         lr_sdf: float = 5e-4,
         lr_autodec: float = 1e-3,
@@ -24,8 +25,7 @@ class SupervisedDistanceRegression(TaskBaseModule):
         lr_sched_gamma: float = 0.5,
         plot_resolution: int = 100,
         plot_max_coord: float = 1.0,
-        epochs_for_plot: int = 200,
-        debug_mode: bool = False
+        epochs_for_plot: int = 200
     ):       
         """_summary_
 
@@ -33,8 +33,10 @@ class SupervisedDistanceRegression(TaskBaseModule):
         ----------
         sdf_functional : SDF
             _description_
-        autodecoder : Autodecoder, optional
-            _description_, by default None
+        num_shapes : int, optional
+            _description_, by default 1
+        condition_size : int, optional
+            _description_, by default 256
         sign_agnostic : bool, optional
             _description_, by default True
         lr_sdf : float, optional
@@ -51,10 +53,8 @@ class SupervisedDistanceRegression(TaskBaseModule):
             _description_, by default 1.0
         epochs_for_plot : int, optional
             _description_, by default 200
-        debug_mode : bool, optional
-            _description_, by default False
         """        
-        super(SupervisedDistanceRegression, self).__init__(sdf_functional, debug_mode)
+        super(SupervisedDistanceRegression, self).__init__(sdf_functional)
         self.dim = self.geometry.dim
         self.sal = sign_agnostic
         self.lr_sdf = lr_sdf
@@ -63,8 +63,8 @@ class SupervisedDistanceRegression(TaskBaseModule):
         self.resolution = plot_resolution
         self.max_coord = plot_max_coord
         self.plot_step = epochs_for_plot
-        if autodecoder is not None:
-            self.autodecoder = autodecoder
+        if num_shapes > 1:
+            self.autodecoder = Autodecoder(num_shapes, condition_size)
             self.is_conditioned = True
             self.lr_autodec = lr_autodec
 
@@ -107,10 +107,11 @@ class EikonalIVPOptimization(TaskBaseModule):
     def __init__(
         self,
         sdf_functional: SDF,
-        autodecoder: Autodecoder = None,
+        num_shapes: int = 1,
+        condition_size: int = 256,
         lr_sdf: float = 5e-4,
         lr_autodec: float = 1e-3,
-        lr_sched_step: int = 500,
+        lr_sched_step: int = 2000,
         lr_sched_gamma: float = 0.5,
         surf_loss_w: float = 1.0,
         eikonal_loss_w: float = 1e-2,
@@ -118,9 +119,7 @@ class EikonalIVPOptimization(TaskBaseModule):
         zero_penalty_w: float = 1e-1,
         zero_penalty_a: float = 1e2,
         plot_resolution: int = 100,
-        plot_max_coord: float = 1.0,
-        epochs_for_plot: int = 500,
-        debug_mode: bool = False
+        plot_max_coord: float = 1.0
     ):       
         """_summary_
 
@@ -152,12 +151,8 @@ class EikonalIVPOptimization(TaskBaseModule):
             _description_, by default 100
         plot_max_coord : float, optional
             _description_, by default 1.0
-        epochs_for_plot : int, optional
-            _description_, by default 500
-        debug_mode : bool, optional
-            _description_, by default False
         """        
-        super(EikonalIVPOptimization, self).__init__(sdf_functional, debug_mode)
+        super(EikonalIVPOptimization, self).__init__(sdf_functional)
         self.dim = self.geometry.dim
         self.lr_sdf = lr_sdf
         self.scheduler_step = lr_sched_step
@@ -169,9 +164,8 @@ class EikonalIVPOptimization(TaskBaseModule):
         self.zero_penalty_a = zero_penalty_a
         self.resolution = plot_resolution
         self.max_coord = plot_max_coord
-        self.plot_step = epochs_for_plot
-        if autodecoder is not None:
-            self.autodecoder = autodecoder
+        if num_shapes > 1:
+            self.autodecoder = Autodecoder(num_shapes, condition_size)
             self.is_conditioned = True
             self.lr_autodec = lr_autodec
 

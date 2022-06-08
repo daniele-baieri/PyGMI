@@ -12,14 +12,14 @@ class SDFUnsupervisedData(MultiSourceData):
 
     def __init__(
         self, 
-        train_source_conf: List[Dict], 
-        test_source_conf: List[Dict],
-        preprocessing_conf: Dict,
-        val_split: float,
-        batch_size: Dict[str, int],
-        surf_sample: int,
-        global_space_sample: int,
-        global_sigma: float,
+        train_source_conf: List[Dict] = [], 
+        test_source_conf: List[Dict] = [],
+        preprocessing_conf: Dict = {},
+        val_split: float = 0.0,
+        batch_size: Dict[str, int] = {'train': 0, 'val': 0, 'test': 0},
+        surf_sample: int = 16384,
+        global_space_sample: int = 2048,
+        global_sigma: float = 1.8,
         local_sigma: float = None,
         use_normals: bool = True
     ):
@@ -44,7 +44,7 @@ class SDFUnsupervisedData(MultiSourceData):
         surf_sample : int
             Size of point sample representing a shape's surface
         global_space_sample : int
-            Size of global point samples in spatial sampling. Usually set to 
+            Size of global point samples in spatial sampling. Usually set equal to 
             `surf_sample // 8`. The final size of spatial samples is `surf_sample + global_space_sample`
         global_sigma : float
             Maximum coordinate of space for global spatial point sampling
@@ -89,7 +89,7 @@ class SDFUnsupervisedData(MultiSourceData):
         sample_local = point_cloud + (torch.randn_like(point_cloud) * local_sigma)
         sample_global = (
             2 * self.global_sigma * torch.rand(
-                point_cloud.shape[0], self.space_sample // 8, point_cloud.shape[2]
+                point_cloud.shape[0], self.space_sample, point_cloud.shape[2]
             )) - self.global_sigma
         return torch.cat([sample_local, sample_global], dim=1)
 
@@ -131,13 +131,13 @@ class SDFSupervisedData(MultiSourceData):
 
     def __init__(
         self, 
-        train_source_conf: List[Dict], 
-        test_source_conf: List[Dict],
-        preprocessing_conf: Dict,
-        val_split: float,
-        batch_size: Dict[str, int],
-        surf_sample: int,
-        space_sample: int,
+        train_source_conf: List[Dict] = [], 
+        test_source_conf: List[Dict] = [],
+        preprocessing_conf: Dict = {},
+        val_split: float = 0.0,
+        batch_size: Dict[str, int] = {'train': 0, 'val': 0, 'test': 0},
+        surf_sample: int = 16384,
+        space_sample: int = 16384,
         use_normals: bool = True
     ):
         """3D data for supervised (i.e. with ground truth distances) SDF tasks.

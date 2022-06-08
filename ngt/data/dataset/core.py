@@ -34,35 +34,56 @@ class MultiSourceData(pl.LightningDataModule):
 
     def __init__(
         self, 
-        train_source_conf: List[Dict], 
-        test_source_conf: List[Dict],
-        preprocessing_conf: Dict,
-        batch_size: Dict[str, int],
-        val_split: float
+        train_source_conf: List[Dict] = [], 
+        test_source_conf: List[Dict] = [],
+        preprocessing_conf: Dict = {},
+        batch_size: Dict[str, int] = {'train': 0, 'val': 0, 'test': 0},
+        val_split: float = 0.0
     ):
+        """_summary_
+
+        Parameters
+        ----------
+        train_source_conf : List[Dict], optional
+            _description_, by default []
+        test_source_conf : List[Dict], optional
+            _description_, by default []
+        preprocessing_conf : Dict, optional
+            _description_, by default {}
+        batch_size : Dict[str, int], optional
+            _description_, by default {}
+        val_split : float, optional
+            _description_, by default 0.0
+        """        
         """Generic multi-source data module. Should be subclassed to define
         custom behaviour for collecting preprocessed data into batches.
 
         Parameters
         ----------
-        train_source_conf : List[Dict]
+        train_source_conf : List[Dict], optional
             List of configurations for multiple data sources. Each should specify a type
             (i.e. a subclass of ngt.data.sources.core.DataSource), and a configuration in 
-            dict format depending on the source type (see ngt.data.sources)
-        test_source_conf : List[Dict]
-            List of configurations for multiple data sources
-        preprocessing_conf : Dict
-            Configuration for preprocessing procedure for the selected data sources
-        batch_size : Dict[str, int]
-            Batch size for train, test, val. Expects keys: {"train", "val", "test"}
-        val_split : float
-            Fraction of training data serving for validation
+            dict format depending on the source type (see ngt.data.sources), by default []
+        test_source_conf : List[Dict], optional
+            List of configurations for multiple data sources, by default []
+        preprocessing_conf : Dict, optional
+            Configuration for preprocessing procedure for the selected data sources, by default {}
+        batch_size : Dict[str, int], optional
+            Batch size for train, test, val. Expects keys: {"train", "val", "test"}, 
+            by default {'train': 0, 'val': 0, 'test': 0}
+        val_split : float, optional
+            Fraction of training data serving for validation, by default 0.0
         """
         super(MultiSourceData, self).__init__()
         self.train = train_source_conf
         self.test = test_source_conf
         self.preproc_conf = preprocessing_conf
-        self.preproc_fn = getattr(ngt.data.preprocess, self.preproc_conf['script'])
+        if self.preproc_conf is not None:
+            self.preproc_fn = getattr(ngt.data.preprocess, self.preproc_conf['script'])
+        else:
+            self.preproc_conf = {}
+            self.preproc_conf['do_preprocessing'] = False
+            self.preproc_fn = None
         self.train_paths = PathList([])
         self.val_paths = PathList([])
         self.test_paths = PathList([])

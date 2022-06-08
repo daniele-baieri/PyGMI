@@ -1,42 +1,20 @@
+import yaml
 import pytorch_lightning as pl
-from typing import Union, Optional, Callable, Any
+import ngt.data.dataset
+import ngt.tasks
+import ngt.tasks.types
+import ngt.nn
+from typing import Tuple
+from pytorch_lightning.loggers import WandbLogger
 from ngt.tasks.types import ImplicitFunction
 
 
 
 class TaskBaseModule(pl.LightningModule):
 
-    def __init__(self, geom_repr: ImplicitFunction, debug_mode: bool = False) -> None:
+    def __init__(self, geom_repr: ImplicitFunction) -> None:
         super(TaskBaseModule, self).__init__()
         self.geometry = geom_repr
-        self.debug = debug_mode
-
-    def log(
-        self, 
-        name: str, 
-        value: Any, 
-        prog_bar: bool = False, 
-        logger: bool = True, 
-        on_step: Optional[bool] = None, 
-        on_epoch: Optional[bool] = None, 
-        reduce_fx: Union[str, Callable] = "default", 
-        tbptt_reduce_fx: Optional[Any] = None, 
-        tbptt_pad_token: Optional[Any] = None, 
-        enable_graph: bool = False, 
-        sync_dist: bool = False, 
-        sync_dist_op: Optional[Any] = None, 
-        sync_dist_group: Optional[Any] = None, 
-        add_dataloader_idx: bool = True, 
-        batch_size: Optional[int] = None, 
-        metric_attribute: Optional[str] = None, 
-        rank_zero_only: Optional[bool] = None
-    ) -> None:
-        if self.debug:
-            return super(TaskBaseModule, self).log(
-                name, value, prog_bar, logger, on_step, on_epoch, 
-                reduce_fx, tbptt_reduce_fx, tbptt_pad_token, enable_graph, 
-                sync_dist, sync_dist_op, sync_dist_group, add_dataloader_idx, 
-                batch_size, metric_attribute, rank_zero_only)
 
 
 def run_task(
@@ -60,3 +38,41 @@ def run_task(
     """    
     trainer.fit(task_module, data)
     return task_module.geometry
+
+def make_environment(conf_file: str) -> Tuple[pl.LightningDataModule, TaskBaseModule, pl.Trainer]:
+    conf = yaml.safe_load(open(conf_file))
+
+    # Make data
+    data_conf = conf['data']
+    make_data = getattr(ngt.data.dataset, data_conf['dataset_type'])
+    del data_conf['dataset_type']
+    data = make_data(**data_conf)
+
+    # Make task
+    task_conf = conf['task']
+    make_task = getattr(ngt.tasks, task_conf['name'])
+    del task_conf['name']
+
+    func_conf = task_conf['functional']
+    make_functional = getattr(ngt.tasks.types, func_conf['type'])
+    del func_conf['type']
+
+    nn_conf = func_conf['approximator']
+    make_nn = getattr(ngt.nn, nn_conf['type'])
+    del nn_conf['type']
+
+    nn = make_nn(**nn_conf)
+    func = make_functional(nn, **func_conf)
+    task = make_task(func, **task_conf)
+
+    # Make trainer
+    opt_conf = conf['optimization']
+    if opt_conf['logging'] is True:
+        logger = WandbLogger(project='NGT Task Logs', config=conf)
+    else:
+        logger = False
+    del opt_conf['logging']
+    opt_conf['logger'] = logger
+    trainer = pl.Trainer(**opt_conf)
+
+    return data, task, trainer

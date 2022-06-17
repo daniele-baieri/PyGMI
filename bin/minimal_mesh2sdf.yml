@@ -1,7 +1,6 @@
 data:
 
   dataset_type: SDFSupervisedData
-  val_split: 0.0
 
   train_source_conf:
     - type: PyGDataSource
@@ -26,8 +25,6 @@ data:
   batch_size:
     train: 16
 
-  surf_sample: 16384
-  space_sample: 16384
   use_normals: false
 
 
@@ -40,20 +37,10 @@ task:
     dim: 3
 
     approximator:
-      type: SirenSDF
-      hidden_dim: 256
-      hidden_layers: 5
-      use_first_layer_init: false
-      w0_in_layer_init: true
+      type: DeepReLUSDFNet
+      input_dim: 259
     
   num_shapes: 131
-  condition_size: 256
-  sign_agnostic: true
-  lr_sdf: 5e-4
-  lr_autodec: 1e-3
-  lr_sched_step: 500
-  lr_sched_gamma: 0.5
-  plot_resolution: 100
   plot_max_coord: 1.2
 
 

@@ -1,7 +1,6 @@
 data:
 
   dataset_type: SDFUnsupervisedData
-  val_split: 0.0
 
   train_source_conf:
     - type: PyGDataSource
@@ -23,12 +22,6 @@ data:
   batch_size:
     train: 1
 
-  surf_sample: 16384
-  global_space_sample: 2048
-  use_normals: true
-  local_sigma: null
-  global_sigma: 1.8
-
 
 task:
 
@@ -39,21 +32,14 @@ task:
     dim: 3
 
     approximator:
-      type: SmoothDeepSDFNet
-      hidden_dim: 512
-      num_layers: 8
+      type: SirenSDF
     
-  num_shapes: 1
   lr_sdf: 1e-3
-  lr_sched_step: 2000
-  lr_sched_gamma: 0.5
-  plot_resolution: 100
   plot_max_coord: 1.2
-  zero_penalty_w: 0.0
 
 
 optimization:
   
-  max_epochs: 10000
+  max_epochs: 5000
   logging: false
   gpus: 1

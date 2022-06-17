@@ -1,26 +1,30 @@
-# Neural Geometry Toolkit
+# PyGMI
 
-Following the recent trends in geometric deep learning, we release a toolbox to facilitate operating with neural implicit geometric representations. 
+Following the recent trends in geometric deep learning, we release PyTorch Geometric Implicit (PyGMI): a toolbox to facilitate operating with neural implicit geometric representations. 
 
 # Usage
 
-We define both pre-made commonly used structures and supertypes to define your custom behaviours. 
+Besides a vast utility library spanning from volume rendering to batched differential operations, PyGMI features the following modules:
 
-## Configuration
+* `pygmi.nn`: a torch-based collection of popularly used neural network models in the field
+* `pygmi.types`: an object-oriented interface to represent implicit functions
+* `pygmi.data`: a data utility interface which allows to load data from heterogenous sources and run preprocessing algorithms
+* `pygmi.tasks`: a collection of out-of-the-box PyTorch Lightning Modules allowing to quickly solve popular implicit geometry tasks
+
+We document each submodule individually.
 
 ## Data Pipeline
 
-
-* `MultiSourceData`: a PyTorch Lightning DataModule, which you can subclass to define `{train, val, test}_dataloader` methods. Your subclasses can still use the same configurations as before.
-
-## Neural networks
+## Neural Networks
 
 ## Tasks
 
-Pre-implemented tasks use WandB for logging, however we allow to disable logging - you may use whichever logger you prefer for your custom tasks.
+## Implicit Functions
 
 
 # Dependencies
+
+Dependencies are preinstalled using our installer. Anyway, this is an exhaustive list:
 
 * PyTorch
 

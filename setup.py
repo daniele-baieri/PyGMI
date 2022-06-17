@@ -4,14 +4,17 @@
 from setuptools import setup
 
 setup(
-    name='funniest',
+    name='pygmi',
     version='0.1',
-    description='The funniest joke in the world',
-    url='http://github.com/storborg/funniest',
-    author='Flying Circus',
-    author_email='flyingcircus@example.com',
-    license='MIT',
-    packages=['funniest'],
+    description='PyTorch Geometric Implicit - A library for neural implicit geometry',
+    url='https://github.com/daniele-baieri/PyGMI',
+    author='Daniele Baieri',
+    author_email='daniele.baieri@gmail.com',
+    license='GPL3',
+    packages=['pygmi'],
+    install_requires=[
+
+    ],
     zip_safe=False
 )
 

@@ -56,7 +56,6 @@ class SDFUnsupervisedData(MultiSourceData):
         """        
         super(SDFUnsupervisedData, self).__init__(
             train_source_conf, test_source_conf, preprocessing_conf, batch_size, val_split)
-        self.preproc_fn = pygmi.data.preprocess.upsample_with_normals
         self.surf_sample = surf_sample
         self.space_sample = global_space_sample
         self.global_sigma = global_sigma

@@ -1,0 +1,9 @@
+numpy
+torch --install-option='--extra-index-url https://download.pytorch.org/whl/cu113'
+torchvision --install-option='--extra-index-url https://download.pytorch.org/whl/cu113'
+pytorch_lightning
+wandb
+cgal --install-option='-i https://test.pypi.org/simple/' 
+scikit-image
+plotly
+typing-extensions; python_version < '3.8'

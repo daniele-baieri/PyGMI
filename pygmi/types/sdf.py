@@ -3,7 +3,7 @@ import pygmi.utils.math.diffops as diffops
 import pygmi.utils.extract as extract
 from typing import Callable, Literal, Tuple
 from torch import Tensor
-from pygmi.types import ImplicitFunction
+from pygmi.types.core import ImplicitFunction
 
 
 class SDF(ImplicitFunction):

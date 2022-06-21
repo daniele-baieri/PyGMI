@@ -56,7 +56,8 @@ class SmoothDeepSDFNet(_MLP):
         input_dim: int = 3, 
         hidden_dim: int = 512,
         num_layers: int = 8, 
-        skip_conn: List[int] = [4]
+        skip_conn: List[int] = [4],
+        geom_init: bool = True
     ):
         """Softplus-activated MLP, as proposed in https://arxiv.org/abs/2002.10099.
         Default parameters and spherical weight initialization are as in original paper.
@@ -73,7 +74,7 @@ class SmoothDeepSDFNet(_MLP):
             _description_, by default [4]
         """        
         super(SmoothDeepSDFNet, self).__init__(
-            num_layers, input_dim, 1, hidden_dim, skip_conn, True, nn.Softplus()
+            num_layers, input_dim, 1, hidden_dim, skip_conn, geom_init, nn.Softplus()
         )
 
 
@@ -84,7 +85,8 @@ class DeepReLUSDFNet(_MLP):
         input_dim: int = 3, 
         hidden_dim: int = 512,
         num_layers: int = 8, 
-        skip_conn: List[int] = [4]
+        skip_conn: List[int] = [4],
+        geom_init: bool = True
     ):
         """ReLU-activated MLP, as proposed in https://arxiv.org/abs/1901.05103.
         Default parameters are as in original paper. Also features spherical
@@ -102,5 +104,5 @@ class DeepReLUSDFNet(_MLP):
             _description_, by default [4]
         """        
         super(SmoothDeepSDFNet, self).__init__(
-            num_layers, input_dim, 1, hidden_dim, skip_conn, True, nn.ReLU()
+            num_layers, input_dim, 1, hidden_dim, skip_conn, geom_init, nn.ReLU()
         )

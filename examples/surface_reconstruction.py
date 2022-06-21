@@ -25,7 +25,7 @@ if __name__ == "__main__":
             dict(
                 type='TXTArrayDataSource',
                 source_conf=dict(
-                    source='path/to/dir/containing/ply/file',
+                    source='path/to/dir/containing/txt/file',
                     idx_select=None
                 )
             )

@@ -13,6 +13,22 @@ from CGAL.CGAL_AABB_tree import AABB_tree_Triangle_3_soup
 def _upsample_and_normalize(
     S: PyGData, sample: int
 ) -> Tuple[trimesh.Trimesh, Tensor, Tensor, Tensor, np.ndarray, float]:
+    """Upsamples, centers and normalizes mesh to unitary area.
+
+    Parameters
+    ----------
+    S : PyGData
+        A mesh stored as a `torch_geometric.data.Data` object
+    sample : int
+        Number of points to sample from mesh surface
+
+    Returns
+    -------
+    Tuple[trimesh.Trimesh, Tensor, Tensor, Tensor, np.ndarray, float]
+        Trimesh representation of given mesh, mesh vertices, upsampled
+        point cloud, normals for each point in point cloud, mesh center point,
+        mesh area.
+    """
 
     # Create trimesh # 
     F = S.face
@@ -34,6 +50,20 @@ def _upsample_and_normalize(
     return mesh, V, torch.from_numpy(pnts)[:, [0, 2, 1]].float(), normals, center, area
 
 def _compute_sigmas(pnts: Tensor) -> np.ndarray:
+    """Computes point-wise standard deviations for informed spatial sampling 
+    around a shape, given a Tensor of surface points. Applies the 50-th nearest
+    neighbor heuristic.
+
+    Parameters
+    ----------
+    pnts : Tensor
+        A surface sample of the shape of interest
+
+    Returns
+    -------
+    np.ndarray
+        For each point in `pnts`, the distance from the 50-th nearest neighbor
+    """    
 
     query = pnts.numpy()
     sigmas = []
@@ -46,19 +76,23 @@ def _compute_sigmas(pnts: Tensor) -> np.ndarray:
 
 
 def get_distance_values(S: PyGData, out_path: str, sample: int, global_sigma: float = 0.2) -> None: 
-    """Preprocess a 3D shape for SDF tasks: get ground truth distance values
+    """Preprocess a mesh for SDF tasks: get ground truth distance values
     without sign. Useful for learning SDFs using (e.g.) sign agnostic regression.
+    `out_path` will contain a dict with keys {'surface', 'dists', 'vertices', 'faces', 'normals'},
+    respectively mapping to: a point cloud obtained by upsamping the mesh (`N x 3` Tensor), 
+    a cloud of random points labeled with distances from the surface (`M x 4` Tensor), vertices
+    and faces of the original mesh, surface normals for points in 'surface' (`N x 3` Tensor). 
 
     Parameters
     ----------
     S : PyGData
         A torch_geometric.data.Data object, representing a mesh
     sample : int
-        Surface sample size and (distance sample size) / 2
+        Surface sample size and half distance sample size
     out_path : str
         Memory location to save preprocessed data
     global_sigma : float, optional
-        _description_, by default 0.2
+        Standard deviation for sampling points around shape, by default 0.2
     """    
         
     mesh, V, pnts, normals, center, area = _upsample_and_normalize(S, sample)
@@ -113,8 +147,13 @@ def upsample_with_normals(
     sample: int,
     mnfld_sigma: bool = False
 ) -> None: 
-    """Preprocess a 3D shape for SDF tasks: upsample mesh vertices and 
-    normals, optionally compute spatial sampling sigmas
+    """Preprocess a mesh for SDF tasks: upsample mesh vertices and  normals, optionally 
+    compute spatial sampling sigmas. `out_path` will contain a dict with keys {'surface', 
+    'vertices', 'faces', 'normals', 'mnfld_sigma'}, respectively mapping to: a point cloud 
+    obtained by upsamping the mesh (`N x 3` Tensor), vertices and faces of the original mesh, 
+    surface normals for points in 'surface' (`N x 3` Tensor), and (optionally) point-wise
+    standard deviations for informed spatial sampling around the shape, for points in 
+    'surface' (`N x 1` Tensor).
 
     Parameters
     ----------
@@ -124,8 +163,8 @@ def upsample_with_normals(
         Surface (and normals) sample size
     out_path : str
         Memory location to save preprocessed data
-    mnfld_sigma: bool
-        Specifies whether to compute space sampling std for each point
+    mnfld_sigma: bool, optional
+        Specifies whether to compute space sampling std for each point, by default False
     """    
     
     _, V, pnts, normals, _, _ = _upsample_and_normalize(S, sample)
@@ -146,24 +185,37 @@ def upsample_with_normals(
         out_path
     )
 
-def center_point_cloud(S: PyGData, out_path: str) -> None:
-    """Save a point cloud to disk, after centering in the origin
+def center_point_cloud(S: PyGData, out_path: str, mnfld_sigma: bool = False) -> None:
+    """Save a point cloud to disk, after centering in the origin. `out_path` will 
+    contain a dict with keys {'surface', 'normals'}, respectively mapping to: the point cloud 
+    (`N x 3` Tensor), (optionally) surface normals for points in 'surface' (`N x 3` Tensor),
+    and (optionally) point-wise standard deviations for informed spatial sampling around the 
+    shape, for points in 'surface' (`N x 1` Tensor).
 
     Parameters
     ----------
     S : PyGData
         A torch_geometric.data.Data object, representing a point cloud (all 
-        attributes are ignored except for S.pos)
+        attributes are ignored except for S.pos). If it contains normals, they
+        are expected to be stored in `S.normal`.
+    mnfld_sigma: bool, optional
+        Specifies whether to compute space sampling std for each point, by default False
     """    
 
     # Center in origin
     V = S.pos - S.pos.mean(dim=0, keepdim=True)
 
+    # Compute sigmas
+    sigmas = None
+    if mnfld_sigma:
+        sigmas = torch.from_numpy(_compute_sigmas(V)).float()
+
     # Save everything to pth #
     torch.save(
         {
             'surface': V,
-            'normals': getattr(S, 'normal', None)
+            'normals': getattr(S, 'normal', None),
+            'mnfld_sigma': sigmas
         }, 
         out_path
     )

@@ -15,10 +15,23 @@ class DataSource:
         self.indices = range(len(self.source)) if indices is None else indices
 
     def __getitem__(self, idx: int) -> Any:
-        return self.source[self.indices[idx]]
+        return self.process(self.source[self.indices[idx]])
 
     def __len__(self) -> int:
         return len(self.indices)
     
     def process(self, obj: Any) -> Any:
+        """Make raw object ready for preprocessing.
+        For this abstract base class, simply return the object.
+
+        Parameters
+        ----------
+        obj : Any
+            Raw object belonging to data source `self`.
+
+        Returns
+        -------
+        Any
+            Returns `obj`
+        """        
         return obj

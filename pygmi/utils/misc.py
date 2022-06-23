@@ -8,14 +8,18 @@ from typing import Callable
 
 
 
-def timer(func: Callable):
+def timer(func: Callable) -> function:
     """Decorator for timing functions.
 
     Parameters
     ----------
     func : Callable
-        A function
+        Any function
 
+    Returns
+    -------
+    function
+        Timing wrapper for `func`
     """    
     @functools.wraps(func)
     def wrapper_timer(*args, **kwargs):
@@ -93,22 +97,23 @@ def cat_points_latent(points: Tensor, latent: Tensor) -> Tensor:
     return x
 
 def label_to_interval(i: int, lo: float, hi: float, steps: int) -> float:
-    """_summary_
+    """Maps `i` to the proper float value in the linear space with `steps` steps 
+    between `lo` and `hi`.
 
     Parameters
     ----------
     i : int
-        _description_
+        An integer value
     lo : float
-        _description_
+        The minimum value of the linear space
     hi : float
-        _description_
+        The maximum value of the linear space
     steps : int
-        _description_
+        Number of steps between `lo` and `hi`
 
     Returns
     -------
     float
-        _description_
+        The `i`-th step in the linspace
     """    
     return lo + (((hi - lo) / (steps - 1)) * i)

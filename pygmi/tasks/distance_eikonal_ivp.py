@@ -31,36 +31,42 @@ class EikonalIVPOptimization(TaskBaseModule):
         plot_resolution: int = 100,
         plot_max_coord: float = 1.0
     ):       
-        """_summary_
+        """Instantiates an `EikonalIVPOptimization` task. This task reconstructs geometry 
+        from a point cloud by requiring the SDF to vanish on zero-level set points and to
+        have unitary norm of gradient (the SDF needs to support 2nd order derivatives).
+        Optionally, normal constraint (gradient at surface points equals normals) and 
+        zero-value penalty (no small function values far away from surface) can be optimized for.
 
         Parameters
         ----------
         sdf_functional : SDF
-            _description_
-        autodecoder : Autodecoder, optional
-            _description_, by default None
+            Tensor functional representing a signed distance function
+        num_shapes : int, optional
+            Support for multi-shape optimization, by default 1
+        condition_size : int, optional
+            Dimension of latent vectors for multi-shape optimization, by default 256
         lr_sdf : float, optional
-            _description_, by default 5e-4
+            Learning rate for SDF optimization, by default 5e-4
         lr_autodec : float, optional
-            _description_, by default 1e-3
+            Learning rate for latent vectors optimization, by default 1e-3
         lr_sched_step : int, optional
-            _description_, by default 500
+            Step LR scheduler - size of steps, by default 2000
         lr_sched_gamma : float, optional
-            _description_, by default 0.5
+            Step LR scheduler - decay factor, by default 0.5
         surf_loss_w : float, optional
-            _description_, by default 1.0
+            Weight of zero level set loss, by default 1.0
         eikonal_loss_w : float, optional
-            _description_, by default 1e-2
+            Weight of eikonal loss, by default 1e-2
         norm_loss_w : float, optional
-            _description_, by default 1.0
+            Weight of normal loss, by default 1.0
         zero_penalty_w : float, optional
-            _description_, by default 1e-1
+            Weight of zero value penalty, by default 1e-1
         zero_penalty_a : float, optional
-            _description_, by default 1e2
+            Alpha of zero value penalty, by default 1e2
         plot_resolution : int, optional
-            _description_, by default 100
+            Grid resolution of mesh extraction for plots, by default 100
         plot_max_coord : float, optional
-            _description_, by default 1.0
+            Maximum absolute coordinate of plot figures, by default 1.0
         """        
         super(EikonalIVPOptimization, self).__init__(sdf_functional)
         self.dim = self.geometry.dim

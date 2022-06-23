@@ -1,10 +1,10 @@
-import plotly.graph_objects as go
 import functools
+import plotly.graph_objects as go
 import pygmi.utils.extract
-from plotly.subplots import make_subplots
-from typing import Callable, Dict, Tuple, Union
 from torch import Tensor
 from numpy import ndarray
+from plotly.subplots import make_subplots
+from typing import Callable, Dict, Tuple, Union
 from pygmi.utils import label_to_interval
 
 
@@ -20,28 +20,33 @@ def validate_figure(func: Callable):
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Maybe check if args contain a go.Figure? 
-        # Someone may pass a figure without fig =
         if 'fig' not in kwargs.keys():
-            kwargs['fig'] = go.Figure() 
-        func(*args, **kwargs)
+            ffig = None
+            newargs = []
+            for arg in args:
+                if type(arg) == go.Figure():
+                    ffig = arg
+                else:
+                    newargs.append(arg)
+            kwargs['fig'] = go.Figure() if ffig is None else ffig 
+        func(*newargs, **kwargs)
         return kwargs['fig']
     return wrapper
 
 def make_3d_subplots(rows: int = 1, cols: int = 1) -> go.Figure:
-    """_summary_
+    """Creates a plotly Figure with 3D subplots.
 
     Parameters
     ----------
     rows : int, optional
-        _description_, by default 1
+        Number of rows in subplot grid, by default 1
     cols : int, optional
-        _description_, by default 1
+        Number of columns in subplot grid, by default 1
 
     Returns
     -------
     go.Figure
-        _description_
+        Plotly Figure containing the subplots
     """    
     return make_subplots(
         rows, cols, specs=[[{'type': 'surface'}] * cols] * rows
@@ -53,21 +58,21 @@ def plot_trisurf(
     triv: Union[Tensor, ndarray], 
     fig: go.Figure = None
 ) -> go.Figure:
-    """_summary_
+    """Plots a 3D mesh.
 
     Parameters
     ----------
     vert : Union[Tensor, ndarray]
-        _description_
+        Vertices of the mesh
     triv : Union[Tensor, ndarray]
-        _description_
+        Triangles of the mesh
     fig : go.Figure, optional
-        _description_, by default None
+        Figure to append plot to, by default None
 
     Returns
     -------
     go.Figure
-        _description_
+        Either `fig` or a new `go.Figure` containing the plot
     """    
     fig.add_trace(
         go.Mesh3d(
@@ -75,84 +80,85 @@ def plot_trisurf(
             i=triv[:, 0], j=triv[:, 1], k=triv[:, 2]
         )
     )
-    # return fig
 
 @validate_figure
 def plot_isosurfaces(
     grid_coords: Union[Tensor, ndarray], 
-    sdf: Union[Tensor, ndarray],
+    F: Union[Tensor, ndarray],
     min_level: float = -0.5,
     max_level: float = 0.5,
     num_surfs: int = 3,
     fig: go.Figure = None
 ) -> go.Figure:
-    """_summary_
+    """Plots multiple isosurfaces extracted from an implicit function.
 
     Parameters
     ----------
     grid_coords : Union[Tensor, ndarray]
-        _description_
-    sdf : Union[Tensor, ndarray]
-        _description_
+        Point coordinates of the grid
+    F : Union[Tensor, ndarray]
+        Implicit function evaluated on `grid_coords`
     min_level : float, optional
-        _description_, by default -0.5
+        Minimum function level, by default -0.5
     max_level : float, optional
-        _description_, by default 0.5
+        Maximum function level, by default 0.5
     num_surfs : int, optional
-        _description_, by default 3
+        Number of isosurfaces to extract, with linearly spaced levels
+        between `min_level` and `max_level`, by default 3
     fig : go.Figure, optional
-        _description_, by default None
+        Figure to append plot to, by default None
 
     Returns
     -------
     go.Figure
-        _description_
+        Either `fig` or a new `go.Figure` containing the plot
     """    
     fig.add_trace(go.Volume(
         x=grid_coords[:, 0],
         y=grid_coords[:, 1],
         z=grid_coords[:, 2],
-        value=sdf,
+        value=F,
         isomin=min_level,
         max_level=max_level,
         surface_count=num_surfs,
         opacity=0.1
     ))
-    # return fig
 
 @validate_figure
 def isosurf_animation(
-    sdf_volume: Union[Tensor, ndarray],
+    F_volume: Union[Tensor, ndarray],
     min_level: float = -0.5,
     max_level: float = 0.5,
     axes: Tuple[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     steps: int = 3,
     fig: go.Figure = None
 ) -> go.Figure:
-    """_summary_
+    """Plots an animated figure allowing to singularly inspect level surfaces
+    of any given implicit function.
 
     Parameters
     ----------
-    sdf_volume : Union[Tensor, ndarray]
-        _description_
+    F_volume : Union[Tensor, ndarray]
+        `N x N x N` tensor containing function values
     min_level : float, optional
-        _description_, by default -0.5
+        Minimum surface level, by default -0.5
     max_level : float, optional
-        _description_, by default 0.5
+        Maximum surface level, by default 0.5
     steps : int, optional
-        _description_, by default 3
+        Number of linear steps between `min_level` and `max_level`, by default 3
     fig : go.Figure, optional
-        _description_, by default None
+        Figure to append plot to, by default None
 
     Returns
     -------
     go.Figure
-        _description_
+        Either `fig` or a new `go.Figure` containing the plot
     """    
     frames = []
+    voxel_size = (2.0) / (F_volume.shape[0] - 1)
     for s in range(steps):
         t = label_to_interval(s, min_level, max_level, steps)
-        V, T = pygmi.utils.extract.marching_cubes(sdf_volume, (2.0) / (sdf_volume.shape[0] - 1), t)
+        V, T = pygmi.utils.extract.marching_cubes(F_volume, voxel_size, t)
         V -= 1.0
         if s == 0:
             fig.add_trace(go.Mesh3d(x=V[:, 0], y=V[:, 1], z=V[:, 2], i=T[:, 0], j=T[:, 1], k=T[:, 2]))
@@ -215,6 +221,3 @@ def isosurf_animation(
         ],
         sliders=sliders
     )
-
-    # return fig
-

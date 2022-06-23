@@ -22,6 +22,21 @@ class PLYDataSource(DataSource):
         super(PLYDataSource, self).__init__(indices=idx_select)
     
     def process(self, obj: str) -> PyGData:
+        """Override of `process` method. Calls `torch_geometric.io.read_ply`
+        to load a filepath pointing to a .ply file into a `torch_geometric.data.Data`
+        object.
+
+        Parameters
+        ----------
+        obj : str
+            Path to a .ply file on disk.
+
+        Returns
+        -------
+        PyGData
+            A `torch_geometric.data.Data` object, representing a mesh or a point cloud.
+            Usual attributes are `pos`, `face`, and `normal`.
+        """        
         return read_ply(obj)
 
 
@@ -45,6 +60,24 @@ class TXTArrayDataSource(DataSource):
         super(PLYDataSource, self).__init__(indices=idx_select)
     
     def process(self, obj: str) -> PyGData:
+        """Overrides the `process` method, by reading a .txt array and
+        returning it as a `torch_geometric.data.Data` object containing
+        point coordinates and (optionally) normals of a point cloud.
+
+        Parameters
+        ----------
+        obj : str
+            Path to a .txt file containing a point cloud saved as array, 
+            with format:
+                x y z [u v w]
+            Where (x, y, z) are the point coordinates and (u, v, w) are the
+            (optional) surface normals of the corresponding points.
+
+        Returns
+        -------
+        PyGData
+            A `torch_geometric.data.Data` with attributes `pos` and `normal`.
+        """        
         t = read_txt_array(obj)
         pos = t[:, :3]
         if t.shape[1] > 3:

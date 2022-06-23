@@ -25,30 +25,31 @@ class SupervisedDistanceRegression(TaskBaseModule):
         plot_resolution: int = 100,
         plot_max_coord: float = 1.0,
     ):       
-        """_summary_
+        """Instantiates a `SupervisedDistanceRegression` task. This tasks reconstructs
+        SDFs from labeled point clouds by regression from a signal over points in space.
 
         Parameters
         ----------
         sdf_functional : SDF
-            _description_
+            Tensor functional representing a signed distance function
         num_shapes : int, optional
-            _description_, by default 1
+            Support for multi-shape optimization, by default 1
         condition_size : int, optional
-            _description_, by default 256
+            Dimension of latent vectors for multi-shape optimization, by default 256
         sign_agnostic : bool, optional
-            _description_, by default True
+            Whether the training data is signed (False) or unsigned (True), by default True
         lr_sdf : float, optional
-            _description_, by default 5e-4
+            Learning rate for SDF optimization, by default 5e-4
         lr_autodec : float, optional
-            _description_, by default 1e-3
+            Learning rate for latent vectors optimization, by default 1e-3
         lr_sched_step : int, optional
-            _description_, by default 500
+            Step LR scheduler - size of steps, by default 500
         lr_sched_gamma : float, optional
-            _description_, by default 0.5
+            Step LR scheduler - decay factor, by default 0.5
         plot_resolution : int, optional
-            _description_, by default 100
+            Grid resolution of mesh extraction for plots, by default 100
         plot_max_coord : float, optional
-            _description_, by default 1.0
+            Maximum absolute coordinate of plot figures, by default 1.0
         """        
         super(SupervisedDistanceRegression, self).__init__(sdf_functional)
         self.dim = self.geometry.dim

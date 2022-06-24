@@ -25,19 +25,19 @@ if __name__ == "__main__":
             dict(
                 type='TXTArrayDataSource',
                 source_conf=dict(
-                    source='path/to/dir/containing/txt/file',
+                    source='data/raw',  # '/path/to/dir/containing/txt/file',
                     idx_select=None
                 )
             )
         ],
         preprocessing_conf=dict(
             do_preprocessing=True,
+            out_dir='data/processed',  #'/path/to/data/output/'
             script='center_point_cloud',
-            conf={}
+            conf=dict(mnfld_sigma=True)
         ),
         batch_size=dict(train=1, val=1, test=1),
         use_normals=has_normal_data,
-        local_sigma=0.2,
         surf_sample=30000,
         global_space_sample=3750
     )
@@ -46,14 +46,15 @@ if __name__ == "__main__":
     sdf = SDF(net)
     task = EikonalIVPOptimization(sdf, lr_sdf=1e-4, lr_sched_step=None, lr_sched_gamma=None)
 
-    epochs = 5000
+    epochs = 3 # 5000
     if logging is True:
         logger = WandbLogger(project='PyGMI Task Logs')
     else: 
         logger = False
-    trainer = pl.Trainer(logger=logger, max_epochs=epochs, gpus=gpu)
+    trainer = pl.Trainer(logger=logger, max_epochs=epochs, accelerator='gpu' if gpu == 1 else 'cpu', devices=gpu)
     trainer.fit(task, data)
 
+    net = net.to('cuda' if gpu == 1 else 'cpu')
     volume = grid_evaluation(sdf, 3, 100, 1.2, 'cuda' if gpu == 1 else 'cpu')
     fig = isosurf_animation(volume, axes=[-1.2, 1.2] * 3, steps=10, min_level=-0.5, max_level=0.7)
     fig.show()

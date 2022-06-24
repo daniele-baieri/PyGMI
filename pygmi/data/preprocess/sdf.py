@@ -208,7 +208,7 @@ def center_point_cloud(S: PyGData, out_path: str, mnfld_sigma: bool = False) -> 
     # Compute sigmas
     sigmas = None
     if mnfld_sigma:
-        sigmas = torch.from_numpy(_compute_sigmas(V)).float()
+        sigmas = torch.from_numpy(_compute_sigmas(V)).float().unsqueeze(-1)
 
     # Save everything to pth #
     torch.save(

@@ -7,27 +7,10 @@ import pygmi.data.preprocess
 from torch.utils.data import DataLoader
 from typing import Optional, List, Dict, Tuple, Any, Collection
 from pygmi.data.preprocess import gather_fnames, process_source
-from pygmi.utils.files import validate_fnames
+from pygmi.utils.files import validate_fnames, mkdir_ifnotexists
 
 
-'''
-class PathList:
 
-    def __init__(self, l: list):
-        self.data = l
-
-    def __getitem__(self, idx: int) -> Tuple[Any, int]:
-        return self.data[idx], idx
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def append(self, x: Any) -> None:
-        self.data.append(x)
-
-    def union(self, x: List[Any]) -> None:
-        self.data += x
-'''
 
 class _ListWithIndices(list):
 
@@ -49,7 +32,7 @@ class _ListWithIndices(list):
         Tuple[Any, int]
             Retrieved object and index
         """        
-        return super(_ListWithIndices, self).__getitem__([idx]), idx    
+        return super(_ListWithIndices, self).__getitem__(idx), idx    
 
 
 
@@ -86,12 +69,7 @@ class MultiSourceData(pl.LightningDataModule):
         self.train = train_source_conf
         self.test = test_source_conf
         self.preproc_conf = preprocessing_conf
-        if self.preproc_conf is not None:
-            self.preproc_fn = getattr(pygmi.data.preprocess, self.preproc_conf['script'])
-        else:
-            self.preproc_conf = {}
-            self.preproc_conf['do_preprocessing'] = False
-            self.preproc_fn = None
+        self.preproc_fn = getattr(pygmi.data.preprocess, self.preproc_conf['script'])
         self.train_paths = _ListWithIndices() # PathList([])
         self.val_paths = _ListWithIndices() # PathList([])
         self.test_paths = _ListWithIndices() # PathList([])
@@ -103,19 +81,21 @@ class MultiSourceData(pl.LightningDataModule):
         if stage == 'fit' or stage is None:
             for conf in self.train:
                 source = getattr(pygmi.data.sources, conf['type'])(**conf['source_conf'])
-                sname = '_'.join(re.split('/|\\', conf['source_conf']['source'].replace('/', '_')))
+                sname = '_'.join(re.split('/|\\\\', conf['source_conf']['source']))
                 fnames = sorted(gather_fnames(self.preproc_conf['out_dir'], sname, len(source)))
+                mkdir_ifnotexists(self.preproc_conf['out_dir'])
                 if self.preproc_conf['do_preprocessing']:
-                    process_source(source, self.preproc_fn, fnames, self.preproc_conf['conf'])
+                    process_source(source, fnames, self.preproc_fn, self.preproc_conf['conf'])
                 else:
                     if not validate_fnames(fnames):
                         raise RuntimeError('Processed files missing with preprocessing disabled.')
-                self.train_paths.union(fnames)
+                self.train_paths += fnames
 
             n_val = int(len(self.train_paths) * self.val_split)
             val_idxs = random.sample(range(len(self.train_paths)), n_val)
-            self.val_paths.union([self.train_paths[i] for i in val_idxs])
-            self.train_paths = np.delete(self.train_paths, val_idxs)
+            self.val_paths += [self.train_paths[i] for i in val_idxs]
+            for i in val_idxs:
+                self.train_paths.pop(i)
                 
         if stage == 'test' or stage is None:  
             for conf in self.test:
@@ -127,16 +107,18 @@ class MultiSourceData(pl.LightningDataModule):
                 else:
                     if not validate_fnames(fnames):
                         raise RuntimeError('Processed files missing with preprocessing disabled.')
-                self.train_paths.union(fnames)
+                self.train_paths += fnames
 
-    def collate(self, data: Collection[Tuple[Any, int]]) -> Any:
+    def collate(self, data: List[Any], idxs: List[int]) -> Any:
         """Users should override this method to define how to put
         several data points in batch form.
 
         Parameters
         ----------
-        data : Collection[Tuple[Any, int]]
+        data : List[Any]
             List of data points and their indices in the dataset
+        idxs : List[int]
+            Indices of `data` in the dataset
 
         Returns
         -------

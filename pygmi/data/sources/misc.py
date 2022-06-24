@@ -18,7 +18,7 @@ class PLYDataSource(DataSource):
         idx_select : List[int], optional
             indices of data objects to select, by default None
         """           
-        self.source = os.listdir(source)
+        self.source = [source + '/' + fp for fp in os.listdir(source)]
         super(PLYDataSource, self).__init__(indices=idx_select)
     
     def process(self, obj: str) -> PyGData:
@@ -56,8 +56,8 @@ class TXTArrayDataSource(DataSource):
         idx_select : List[int], optional
             indices of data objects to select, by default None
         """           
-        self.source = os.listdir(source)
-        super(PLYDataSource, self).__init__(indices=idx_select)
+        self.source = [source + '/' + fp for fp in os.listdir(source)]
+        super(TXTArrayDataSource, self).__init__(indices=idx_select)
     
     def process(self, obj: str) -> PyGData:
         """Overrides the `process` method, by reading a .txt array and

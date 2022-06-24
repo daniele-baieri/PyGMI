@@ -39,7 +39,7 @@ if __name__ == "__main__":
                     source='FAUST',
                     idx_select=None,
                     pyg_kwargs=dict(
-                        root='path/to/FAUST/dir',
+                        root='/path/to/FAUST/dir',
                         train=False
                     )
                 )
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         ],
         preprocessing_conf=dict(
             do_preprocessing=True,
-            out_dir='path/to/data/output/',
+            out_dir='/path/to/data/output/',
             script='get_distance_values',
             conf=dict(sample=500000)
         ),
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         logger = WandbLogger(project='PyGMI Task Logs')
     else: 
         logger = False
-    trainer = pl.Trainer(logger=logger, max_epochs=epochs, gpus=gpu)
+    trainer = pl.Trainer(logger=logger, max_epochs=epochs, accelerator='gpu' if gpu==1 else 'cpu', devices=gpu)
     trainer.fit(task, data)
 
     shape_to_plot = 16

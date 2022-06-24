@@ -8,7 +8,7 @@ from typing import Callable
 
 
 
-def timer(func: Callable) -> function:
+def timer(func: Callable) -> Callable:
     """Decorator for timing functions.
 
     Parameters
@@ -18,7 +18,7 @@ def timer(func: Callable) -> function:
 
     Returns
     -------
-    function
+    Callable
         Timing wrapper for `func`
     """    
     @functools.wraps(func)

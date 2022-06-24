@@ -1,2 +1,2 @@
-from pyg import PyGDataSource
-from misc import PLYDataSource, PNGDataSource, TXTArrayDataSource
+from pygmi.data.sources.pyg import PyGDataSource
+from pygmi.data.sources.misc import PLYDataSource, PNGDataSource, TXTArrayDataSource

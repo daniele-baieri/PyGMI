@@ -115,16 +115,17 @@ class SDFUnsupervisedData(MultiSourceData):
         sigmas_sample = shape['mnfld_sigma'][indices, :] if not self.fixed_local_sigma else None
         return surf_sample, norm_sample, sigmas_sample
 
-    def collate(self, data: List[Tuple[Dict, int]]) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    def collate(self, data: List[Dict], idxs: List[int]) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """Implementation of collate method. Loads a list of dictionaries with keys
         {'surface', 'normals', 'mnfld_sigma'} to a tuple of 4 Tensors (some of which may be
         None, depending on configuration).
 
         Parameters
         ----------
-        data : List[Tuple[Dict, int]]
-            A list of dictionaries with keys {'surface', 'normals', 'mnfld_sigma'} and Tensor 
-            values, along with their indices in the dataset
+        data : List[Dict]
+            A list of dictionaries with keys {'surface', 'normals', 'mnfld_sigma'} and Tensor values
+        idxs : List[int]
+            Indices of `data` in the dataset
 
         Returns
         -------
@@ -134,11 +135,11 @@ class SDFUnsupervisedData(MultiSourceData):
             `B x S x 3` FloatTensor of normals for each sampled surface point (may be None),
             `B x T x 3` FloatTensor of space point samples for each shape in the batch
         """        
-        shape_ids = torch.tensor([x[1] for x in data], dtype=torch.float)
-        samples = [self.sample_surface(x[0]) for x in data]
+        shape_ids = torch.tensor(idxs, dtype=torch.long)
+        samples = [self.sample_surface(x) for x in data]
         surf_sample = torch.stack([x[0] for x in samples])
         norm_sample = torch.stack([x[1] for x in samples]) if self.use_normals else None
-        sigma = self.local_sigma if self.fixed_local_sigma else torch.stack([x[2] for x in samples]).view(-1, -1, 1)
+        sigma = self.local_sigma if self.fixed_local_sigma else torch.stack([x[2] for x in samples])
         space_sample = self.sample_shape_space(surf_sample, sigma)
         return shape_ids, surf_sample, norm_sample, space_sample
 
@@ -244,16 +245,17 @@ class SDFSupervisedData(MultiSourceData):
         norm_sample = shape['normals'][indices, :] if self.use_normals else None
         return surf_sample, norm_sample
 
-    def collate(self, data: List[Tuple[Dict, int]]) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    def collate(self, data: List[Dict], idxs: List[int]) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """Implementation of collate method. Loads a list of dictionaries with keys
         {'surface', 'normals', 'dists'} to a tuple of 4 Tensors (some of which may be
         None, depending on configuration).
 
         Parameters
         ----------
-        data : List[Tuple[Dict, int]]
-            A list of dictionaries with keys {'surface', 'normals', 'dists'} and Tensor 
-            values, along with their indices in the dataset
+        data : List[Dict]
+            A list of dictionaries with keys {'surface', 'normals', 'dists'} and Tensor values
+        idxs : List[int]
+            Indices of `data` in the dataset
 
         Returns
         -------
@@ -263,11 +265,11 @@ class SDFSupervisedData(MultiSourceData):
             `B x S x 3` FloatTensor of normals for each sampled surface point (may be None),
             `B x T x 3` FloatTensor of space point samples for each shape in the batch
         """        
-        shape_ids = torch.tensor([x[1] for x in data], dtype=torch.float)
-        samples = [self.sample_surface(x[0]) for x in data]
+        shape_ids = torch.tensor(idxs, dtype=torch.float)
+        samples = [self.sample_surface(x) for x in data]
         surf_sample = torch.stack([x[0] for x in samples])
         norm_sample = torch.stack([x[1] for x in samples]) if self.use_normals else None
-        dist_sample = torch.stack([self.sample_distances(x[0]) for x in data])
+        dist_sample = torch.stack([self.sample_distances(x) for x in data])
         return shape_ids, surf_sample, norm_sample, dist_sample
 
     def load_data_point(self, path: str) -> Dict[str, Tensor]:

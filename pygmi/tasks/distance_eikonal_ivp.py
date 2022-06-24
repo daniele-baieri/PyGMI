@@ -80,6 +80,7 @@ class EikonalIVPOptimization(TaskBaseModule):
         self.zero_penalty_a = zero_penalty_a
         self.resolution = plot_resolution
         self.max_coord = plot_max_coord
+        self.is_conditioned = False
         if num_shapes > 1:
             self.autodecoder = Autodecoder(num_shapes, condition_size)
             self.is_conditioned = True

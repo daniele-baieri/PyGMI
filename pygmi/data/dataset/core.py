@@ -69,7 +69,10 @@ class MultiSourceData(pl.LightningDataModule):
         self.train = train_source_conf
         self.test = test_source_conf
         self.preproc_conf = preprocessing_conf
-        self.preproc_fn = getattr(pygmi.data.preprocess, self.preproc_conf['script'])
+        if 'script' in self.preproc_conf.keys():
+            self.preproc_fn = getattr(pygmi.data.preprocess, self.preproc_conf['script'])
+        else:
+            self.preproc_fn = None
         self.train_paths = _ListWithIndices() # PathList([])
         self.val_paths = _ListWithIndices() # PathList([])
         self.test_paths = _ListWithIndices() # PathList([])
@@ -87,7 +90,7 @@ class MultiSourceData(pl.LightningDataModule):
                 if self.preproc_conf['do_preprocessing']:
                     process_source(source, fnames, self.preproc_fn, self.preproc_conf['conf'])
                 else:
-                    if not validate_fnames(fnames):
+                    if not validate_fnames(fnames) or len(fnames) == 0:
                         raise RuntimeError('Processed files missing with preprocessing disabled.')
                 self.train_paths += fnames
 

@@ -28,6 +28,7 @@ class EikonalIVPOptimization(TaskBaseModule):
         norm_loss_w: float = 1e2,
         zero_penalty_w: float = 1e2,
         zero_penalty_a: float = -1e2,
+        latent_loss_w: float = 1e-3,
         plot_resolution: int = 100,
         plot_max_coord: float = 1.0
     ):       
@@ -63,6 +64,8 @@ class EikonalIVPOptimization(TaskBaseModule):
             Weight of zero value penalty, by default 1e-1
         zero_penalty_a : float, optional
             Alpha of zero value penalty, by default 1e2
+        latent_loss_w : float, optional
+            Weight of zero-mean constraint for latent vectors, by default 1e-3
         plot_resolution : int, optional
             Grid resolution of mesh extraction for plots, by default 100
         plot_max_coord : float, optional
@@ -78,6 +81,7 @@ class EikonalIVPOptimization(TaskBaseModule):
         self.norm_loss_w = norm_loss_w
         self.zero_penalty_w = zero_penalty_w
         self.zero_penalty_a = zero_penalty_a
+        self.latent_loss_w = latent_loss_w
         self.resolution = plot_resolution
         self.max_coord = plot_max_coord
         self.is_conditioned = False
@@ -100,8 +104,11 @@ class EikonalIVPOptimization(TaskBaseModule):
         indices, surf_sample, norm_sample, space_sample = batch
 
         condition = None
+        latent_loss = 0.0
         if self.is_conditioned:
             condition = self.autodecoder(indices)
+            if self.latent_loss_w > 0:
+                latent_loss = self.latent_loss_w * condition.norm(dim=-1).mean()
 
         x_surf = surf_sample.requires_grad_()
         x_space = space_sample.requires_grad_()
@@ -127,12 +134,13 @@ class EikonalIVPOptimization(TaskBaseModule):
         if self.zero_penalty_w > 0:
             zero_penalty = self.zero_penalty_w * torch.exp(self.zero_penalty_a * torch.abs(space_dist)).mean()
 
-        loss = surf_loss + eikonal_loss + norm_loss + zero_penalty
+        loss = surf_loss + eikonal_loss + norm_loss + zero_penalty + latent_loss
         self.log("loss", loss)
         self.log("surf_loss", surf_loss)
         self.log("eikonal_loss", eikonal_loss)
         self.log("norm_loss", norm_loss)
         self.log("zero_penalty", zero_penalty)
+        self.log("latent_loss", latent_loss)
         return loss
 
     def validation_step(self, batch, batch_idx) -> None:

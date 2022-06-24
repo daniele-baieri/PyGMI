@@ -77,7 +77,7 @@ def make_grid(resolution: int, bound: float, dim: int = 3) -> Tensor:
 
 def cat_points_latent(points: Tensor, latent: Tensor) -> Tensor:
     """Utility function to concatenate latent vectors of continuous
-    data to finite samples thereof.
+    data to finite samples of continuous data.
 
     Parameters
     ----------
@@ -92,6 +92,8 @@ def cat_points_latent(points: Tensor, latent: Tensor) -> Tensor:
         Each point concatenated to the respective latent vector, shape `B x S x (D + N)`
     """    
     B, S = points.shape[0], points.shape[1]
+    if len(latent.shape) == 1:
+        latent = latent.unsqueeze(0)
     z_exp = torch.stack([latent[i, :].expand(S, -1) for i in range(B)])
     x = torch.cat([points, z_exp], dim=-1).view(-1, points.shape[2] + latent.shape[1])
     return x

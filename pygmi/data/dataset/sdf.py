@@ -265,7 +265,7 @@ class SDFSupervisedData(MultiSourceData):
             `B x S x 3` FloatTensor of normals for each sampled surface point (may be None),
             `B x T x 3` FloatTensor of space point samples for each shape in the batch
         """        
-        shape_ids = torch.tensor(idxs, dtype=torch.float)
+        shape_ids = torch.tensor(idxs, dtype=torch.long)
         samples = [self.sample_surface(x) for x in data]
         surf_sample = torch.stack([x[0] for x in samples])
         norm_sample = torch.stack([x[1] for x in samples]) if self.use_normals else None

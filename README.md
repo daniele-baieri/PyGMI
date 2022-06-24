@@ -73,7 +73,7 @@ train_source_conf=[
             source='FAUST',
             idx_select=None,
             pyg_kwargs=dict(
-                root='path/to/FAUST/dir',
+                root='/path/to/FAUST/dir',
                 train=True
             )
         )
@@ -84,7 +84,7 @@ train_source_conf=[
             source='FAUST',
             idx_select=None,
             pyg_kwargs=dict(
-                root='path/to/FAUST/dir',
+                root='/path/to/FAUST/dir',
                 train=False
             )
         )
@@ -103,6 +103,7 @@ preprocessing_conf=dict(
     conf=dict(sample=500000)
 )
 ```
+You should always supply at least `out_dir` and `do_preprocessing`; if preprocessing is not required, PyGMI will look for saved preprocessed files in `out_dir`. An error will be raised if preprocessing is disabled and there are no files to load.
 
 
 ## Tasks

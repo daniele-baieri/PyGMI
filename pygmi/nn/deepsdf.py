@@ -32,7 +32,7 @@ class _MLP(nn.Module):
             lin = nn.Linear(hidden_sizes[layer - 1], out_size)
             if geometric_init:
                 if layer == self.num_layers - 1:
-                    torch.nn.init.normal_(lin.weight, mean=np.sqrt(np.pi) / np.sqrt(hidden_sizes[layer]), std=0.00001)
+                    torch.nn.init.normal_(lin.weight, mean=np.sqrt(np.pi) / np.sqrt(out_size), std=0.00001)
                     torch.nn.init.constant_(lin.bias, -1.0)
                 else:
                     torch.nn.init.constant_(lin.bias, 0.0)
@@ -103,6 +103,6 @@ class DeepReLUSDFNet(_MLP):
         skip_conn : List[int], optional
             _description_, by default [4]
         """        
-        super(SmoothDeepSDFNet, self).__init__(
+        super(DeepReLUSDFNet, self).__init__(
             num_layers, input_dim, 1, hidden_dim, skip_conn, geom_init, nn.ReLU()
         )

@@ -18,6 +18,8 @@ of the training shapes is plotted.
 if __name__ == "__main__":
 
     logging = False
+    num_shapes = 100
+    latent_dim = 256
     gpu = 1 if torch.cuda.is_available() else 0
     
     data = SDFSupervisedData(
@@ -27,10 +29,8 @@ if __name__ == "__main__":
                 source_conf=dict(
                     source='FAUST',
                     idx_select=None,
-                    pyg_kwargs=dict(
-                        root='path/to/FAUST/dir',
-                        train=True
-                    )
+                    root='/path/to/FAUST/dir',
+                    train=True
                 )
             ),
             dict(
@@ -38,10 +38,8 @@ if __name__ == "__main__":
                 source_conf=dict(
                     source='FAUST',
                     idx_select=None,
-                    pyg_kwargs=dict(
-                        root='/path/to/FAUST/dir',
-                        train=False
-                    )
+                    root='/path/to/FAUST/dir',
+                    train=False
                 )
             )  
         ],
@@ -51,12 +49,10 @@ if __name__ == "__main__":
             script='get_distance_values',
             conf=dict(sample=500000)
         ),
-        batch_size=dict(train=16, val=1, test=1),
+        batch_size=dict(train=10, val=1, test=1),
         use_normals=False
     )
 
-    num_shapes = len(data)
-    latent_dim = 256
     net = DeepReLUSDFNet(input_dim = 3 + latent_dim)
     sdf = SDF(net)
     task = SupervisedDistanceRegression(sdf, num_shapes=num_shapes, condition_size=latent_dim)
@@ -69,8 +65,10 @@ if __name__ == "__main__":
     trainer = pl.Trainer(logger=logger, max_epochs=epochs, accelerator='gpu' if gpu==1 else 'cpu', devices=gpu)
     trainer.fit(task, data)
 
+    device = 'cuda' if gpu == 1 else 'cpu'
     shape_to_plot = 16
-    latent = task.autodecoder(shape_to_plot)
-    volume = grid_evaluation(sdf, 3, 100, 1.2, 'cuda' if gpu == 1 else 'cpu', condition=latent)
+    latent = task.autodecoder(shape_to_plot).to(device)
+    net = net.to(device)
+    volume = grid_evaluation(sdf, 3, 100, 1.2, device, condition=latent)
     fig = isosurf_animation(volume, axes=[-1.2, 1.2] * 3, steps=10, min_level=-0.5, max_level=0.7)
     fig.show()

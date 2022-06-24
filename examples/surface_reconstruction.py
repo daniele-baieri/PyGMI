@@ -25,14 +25,14 @@ if __name__ == "__main__":
             dict(
                 type='TXTArrayDataSource',
                 source_conf=dict(
-                    source='data/raw',  # '/path/to/dir/containing/txt/file',
+                    source='/path/to/dir/containing/txt/file',
                     idx_select=None
                 )
             )
         ],
         preprocessing_conf=dict(
             do_preprocessing=True,
-            out_dir='data/processed',  #'/path/to/data/output/'
+            out_dir='/path/to/data/output/', 
             script='center_point_cloud',
             conf=dict(mnfld_sigma=True)
         ),
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     sdf = SDF(net)
     task = EikonalIVPOptimization(sdf, lr_sdf=1e-4, lr_sched_step=None, lr_sched_gamma=None)
 
-    epochs = 3 # 5000
+    epochs = 5000
     if logging is True:
         logger = WandbLogger(project='PyGMI Task Logs')
     else: 

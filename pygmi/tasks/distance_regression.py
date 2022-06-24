@@ -22,6 +22,7 @@ class SupervisedDistanceRegression(TaskBaseModule):
         lr_autodec: float = 1e-3,
         lr_sched_step: int = 500,
         lr_sched_gamma: float = 0.5,
+        latent_loss_w: float = 1e-3,
         plot_resolution: int = 100,
         plot_max_coord: float = 1.0,
     ):       
@@ -46,6 +47,8 @@ class SupervisedDistanceRegression(TaskBaseModule):
             Step LR scheduler - size of steps, by default 500
         lr_sched_gamma : float, optional
             Step LR scheduler - decay factor, by default 0.5
+        latent_loss_w : float, optional
+            Weight of zero-mean constraint for latent vectors, by default 1e-3
         plot_resolution : int, optional
             Grid resolution of mesh extraction for plots, by default 100
         plot_max_coord : float, optional
@@ -57,6 +60,7 @@ class SupervisedDistanceRegression(TaskBaseModule):
         self.lr_sdf = lr_sdf
         self.scheduler_step = lr_sched_step
         self.gamma = lr_sched_gamma
+        self.latent_loss_w = latent_loss_w
         self.resolution = plot_resolution
         self.max_coord = plot_max_coord
         if num_shapes > 1:
@@ -77,8 +81,12 @@ class SupervisedDistanceRegression(TaskBaseModule):
         x_space, y_space = dist_sample[..., :self.dim], dist_sample[..., self.dim:]
 
         condition = None
+        latent_loss = 0.0
         if self.is_conditioned:
             condition = self.autodecoder(indices)
+            if self.latent_loss_w > 0:
+                latent_loss = self.latent_loss_w * condition.norm(dim=-1).mean()
+
         sdf = self.geometry(x_space, condition)
 
         if self.sal:
@@ -86,8 +94,11 @@ class SupervisedDistanceRegression(TaskBaseModule):
         else:
             sdf_loss = (sdf.view_as(y_space) - y_space).abs().mean()
 
-        self.log("loss", sdf_loss)
-        return sdf_loss
+        loss = sdf_loss + latent_loss
+        self.log("loss", loss)
+        self.log("sdf_loss", sdf_loss)
+        self.log("latent_loss", latent_loss)
+        return loss
 
     def validation_step(self, batch, batch_idx) -> None:
         condition = None

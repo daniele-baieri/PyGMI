@@ -1,4 +1,5 @@
 from typing import Callable, Dict, List
+from tqdm import tqdm
 from pygmi.data.sources.core import DataSource
 
 
@@ -35,5 +36,5 @@ def process_source(data: DataSource, fnames: List[str], fn: Callable, fn_kwargs:
     fn_kwargs : Dict
         Additional arguments to preprocessing function
     """    
-    for i in range(len(fnames)):
+    for i in tqdm(range(len(fnames)), desc='Preprocessing data with {}'.format(fn.__name__)):
         fn(data[i], fnames[i], **fn_kwargs)

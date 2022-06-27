@@ -1,7 +1,7 @@
 import random
 import torch
 from torch import Tensor
-from typing import List, Dict, Tuple, Union, Any
+from typing import List, Dict, Tuple, Union
 from pygmi.data.dataset import MultiSourceData
 
 

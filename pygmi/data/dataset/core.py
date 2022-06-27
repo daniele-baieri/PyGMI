@@ -1,11 +1,10 @@
 import re
 import random
-import numpy as np
 import pytorch_lightning as pl
 import pygmi.data.sources
 import pygmi.data.preprocess
 from torch.utils.data import DataLoader
-from typing import Optional, List, Dict, Tuple, Any, Collection
+from typing import Optional, List, Dict, Tuple, Any
 from pygmi.data.preprocess import gather_fnames, process_source
 from pygmi.utils.files import validate_fnames, mkdir_ifnotexists
 
@@ -73,9 +72,9 @@ class MultiSourceData(pl.LightningDataModule):
             self.preproc_fn = getattr(pygmi.data.preprocess, self.preproc_conf['script'])
         else:
             self.preproc_fn = None
-        self.train_paths = _ListWithIndices() # PathList([])
-        self.val_paths = _ListWithIndices() # PathList([])
-        self.test_paths = _ListWithIndices() # PathList([])
+        self.train_paths = _ListWithIndices() 
+        self.val_paths = _ListWithIndices() 
+        self.test_paths = _ListWithIndices() 
         self.val_split = val_split
         self.batch_size = batch_size
 

@@ -49,14 +49,16 @@ As an additional features, we include implementations of simple shape encoding a
 
 ## Data Pipeline
 
-The data interface is completely optional to basic PyGMI usage, but it is applied in our pre-implemented Tasks. We mainly developed it for the common need of integrating data from multiple homogenous data sources (e.g. multiple 3D shape datasets).
+The data interface is completely optional to basic PyGMI usage, but it is applied in our pre-implemented Tasks. We mainly developed it for the common need of integrating data from multiple homogenous data sources (e.g. multiple 3D shape datasets). At the moment, our data pipeline only supports in-memory datasets (i.e. data which is preprocessed, stored on disk and loaded on-demand).
 
 While we suggest to follow the usage showed in `examples/`, a simple `pygmi.data` use case can be described as follows:
 
 1. Select any number of data sources, each with its type (must be a class name in `pyg.data.sources`), configuration and index selection (to cherry-pick dataset elements)
 2. Define a preprocessing function or select one from `pygmi.data.preprocess`; this function should take raw data as input and save processed data to disk *
-3. Subclass `pygmi.data.dataset.MultiSourceData` to override the `collate` method, defining a map from a list of file paths to training data (e.g. a tuple of `torch.Tensor`s) *
-4. Instantiate your subclass by passing the data sources (see below) and the preprocessing information (see below) as `dict`s
+3. Subclass `pygmi.data.dataset.MultiSourceData` to override:
+    1. The `collate` method, defining how a list of data points is aggregated to form a batch *
+    2. The `load_data_point` method, defining how a preprocessed data point is loaded from disk to main memory *
+5. Instantiate your subclass by passing the data sources (see below) and the preprocessing information (see below) as `dict`s
 
 
 \* This behaviour may change in the future.
@@ -72,10 +74,8 @@ train_source_conf=[
         source_conf=dict(
             source='FAUST',
             idx_select=None,
-            pyg_kwargs=dict(
-                root='/path/to/FAUST/dir',
-                train=True
-            )
+            root='/path/to/FAUST/dir',  # kwargs for PyG FAUST constructor 
+            train=True                  # kwargs for PyG FAUST constructor 
         )
     ),
     dict(
@@ -83,10 +83,8 @@ train_source_conf=[
         source_conf=dict(
             source='FAUST',
             idx_select=None,
-            pyg_kwargs=dict(
-                root='/path/to/FAUST/dir',
-                train=False
-            )
+            root='/path/to/FAUST/dir',  # kwargs for PyG FAUST constructor 
+            train=False                 # kwargs for PyG FAUST constructor 
         )
     )  
 ]
@@ -120,8 +118,7 @@ and calling `trainer.fit(task, data)`. Take a look at `examples/` for a more con
 
 ## Implicit Functions
 
-`pygmi.types` defines abstract object-oriented interfaces to work with `ImplicitFunction` subclasses. The real computation occurs in the `approximator` object which
-is required at creation. This could be a neural network or an analytic function, such as `pygmi.utils.sphere_sdf`. 
+`pygmi.types` defines abstract object-oriented interfaces to work with `ImplicitFunction` subclasses. The real computation occurs in the `approximator` object which is required at creation. This could be a neural network or an analytic function, such as `pygmi.utils.sphere_sdf`. 
 
 
 

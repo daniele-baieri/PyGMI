@@ -4,24 +4,24 @@ import numpy as np
 from typing import List
 from torch import Tensor
 
-class NeRF_MLP(nn.Module):
+class _MLP(nn.Module):
 
     def __init__(
-        self,
-        num_layers: int, 
+        self, 
         input_dim: int,
         input_view_dim: int,
         output_dim: int, 
+        hidden_layers: int,
         hidden_dim: int,
         skip_in: List[int],
     ):       
-        super(NeRF_MLP, self).__init__()
+        super(_MLP, self).__init__()
 
         self.input_dim = input_dim
         self.input_view_dim = input_view_dim
         self.actvn = nn.ReLU()  
 
-        hidden_sizes = [input_dim + input_view_dim] + ([hidden_dim] * (num_layers - 1)) + [output_dim]
+        hidden_sizes = [input_dim + input_view_dim] + ([hidden_dim] * (hidden_layers - 1)) + [output_dim]
         self.num_layers = len(hidden_sizes)
         self.skip_conn = set(skip_in)
 
@@ -43,14 +43,14 @@ class NeRF_MLP(nn.Module):
         return output
 
 
-class NeRF(NeRF_MLP):
+class NerfMLP(_MLP):
 
     def __init__(
-        self, 
-        num_layers: int = 8, 
+        self,  
         input_dim: int = 3, 
         input_view_dim: int = 3,
         output_dim: int = 4,
+        hidden_layers: int = 8,
         hidden_dim: int = 256,
         skip_conn: List[int] = [4],
     ):
@@ -68,6 +68,6 @@ class NeRF(NeRF_MLP):
         skip_conn : List[int], optional
             _description_, by default [4]
         """ 
-        super(NeRF, self).__init__(
-            input_dim, 1, hidden_dim, hidden_layers, 30.0, 30.0, use_first_layer_init, w0_in_layer_init
+        super(NerfMLP, self).__init__(
+            input_dim, input_view_dim, output_dim, hidden_layers, hidden_dim, skip_conn
         )

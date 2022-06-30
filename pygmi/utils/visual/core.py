@@ -129,7 +129,7 @@ def isosurf_animation(
     F_volume: Union[Tensor, ndarray],
     min_level: float = -0.5,
     max_level: float = 0.5,
-    axes: Tuple[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+    axes: Tuple[float] = (-1.0, 1.0),
     steps: int = 3,
     fig: go.Figure = None
 ) -> go.Figure:
@@ -155,11 +155,12 @@ def isosurf_animation(
         Either `fig` or a new `go.Figure` containing the plot
     """    
     frames = []
-    voxel_size = (2.0) / (F_volume.shape[0] - 1)
+    space_size = axes[1] - axes[0]
+    voxel_size = (space_size) / (F_volume.shape[0] - 1)
     for s in range(steps):
         t = label_to_interval(s, min_level, max_level, steps)
         V, T = pygmi.utils.extract.marching_cubes(F_volume, voxel_size, t)
-        V -= 1.0
+        V -= (space_size) / 2
         if s == 0:
             fig.add_trace(go.Mesh3d(x=V[:, 0], y=V[:, 1], z=V[:, 2], i=T[:, 0], j=T[:, 1], k=T[:, 2]))
         frames.append(go.Frame(
@@ -194,8 +195,8 @@ def isosurf_animation(
         width=600,
         height=600,
         scene=dict(
-            zaxis=dict(range=[axes[4], axes[5]], autorange=False),
-            yaxis=dict(range=[axes[2], axes[3]], autorange=False),
+            zaxis=dict(range=[axes[0], axes[1]], autorange=False),
+            yaxis=dict(range=[axes[0], axes[1]], autorange=False),
             xaxis=dict(range=[axes[0], axes[1]], autorange=False)
         ),
         updatemenus = [

@@ -6,7 +6,7 @@ Following the recent trends in geometric deep learning, we release PyTorch Geome
 
 **We recommend to install in a Python environment with a working PyTorch (>= 1.8.0) installation**. If PyTorch is not found, the installer will automatically pick a minimal CPU installation. To install PyGMI, download this repository, cd to top level folder, and run:
 ```
-        pip install --extra-index-url=https://test.pypi.org/simple/ .
+pip install --extra-index-url=https://test.pypi.org/simple/ . --verbose
 ```
 This will install PyGMI, along with several other dependencies, to the current shell's Python directory. We advise to do this in a virtual environment.
 
@@ -14,7 +14,7 @@ This will install PyGMI, along with several other dependencies, to the current s
 
 Our setup script will run additional silent `pip install`s for PyTorch Geometric and its dependencies, if it is not found in the installation environment. If you do not wish to run these code lines, set the environment variable `PYGMI_NO_ADD_DEPS` to `1`. Then, to install PyTorch Geometric, we refer to [the library's documentation](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html), but we advise to run the simple install procedure with conda:
 ```
-        conda install pyg -c pyg
+conda install pyg -c pyg
 ```
 which will auto-detect your torch and cuda versions.
 

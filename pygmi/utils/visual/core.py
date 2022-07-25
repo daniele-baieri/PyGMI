@@ -20,6 +20,7 @@ def validate_figure(func: Callable):
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        newargs = args
         if 'fig' not in kwargs.keys():
             ffig = None
             newargs = []

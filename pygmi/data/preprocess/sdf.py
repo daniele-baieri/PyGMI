@@ -171,7 +171,7 @@ def upsample_with_normals(
 
     sigmas = None
     if mnfld_sigma:
-        sigmas = torch.from_numpy(_compute_sigmas(pnts)).float()
+        sigmas = torch.from_numpy(_compute_sigmas(pnts)).float().unsqueeze(-1)
         
     # Save everything to pth #
     torch.save(

@@ -74,7 +74,7 @@ class SmoothDeepSDFNet(_MLP):
             _description_, by default [4]
         """        
         super(SmoothDeepSDFNet, self).__init__(
-            num_layers, input_dim, 1, hidden_dim, skip_conn, geom_init, nn.Softplus()
+            num_layers, input_dim, 1, hidden_dim, skip_conn, geom_init, nn.Softplus(beta=100)
         )
 
 
